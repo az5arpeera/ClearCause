@@ -31,15 +31,21 @@ Why it matters
 - [ ] Create landing page (UI)
 - [ ] About page
 - [ ] Contact Form
+
 #### Shaheer
 - [ ] Authentication (Email, google, yahoo)
 - [ ] database schemas: (user prefs, charity financials (from scrape), etc (tbd for now)
 - [ ] matching algorithm
+
 #### Ali
 - [ ] scraper
 - [ ] matching algorithm
+
+
 #### Eeshan
 - [ ] charity ranking algorithm
+
+
 #### TBD
 - [ ] payment processor (stripe)
 
