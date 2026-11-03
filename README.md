@@ -1,6 +1,22 @@
 # ClearCause
 Donation Matching Dashboard
 
+Clear Cause connects donors with the charities that best match their values, and makes it easy to see where the money goes.
+
+What it is
+
+Most giving platforms favor large, well-known charities, and donors have little insight into how their money is used. Clear Cause addresses both problems with a matching and transparency layer on top of charitable giving.
+
+Core features
+Donor–charity matching algorithm: Ranks charities and matches them to each donor based on cause alignment and giving preferences, instead of making donors search through directories.
+Transparency dashboard: Shows how each organization operates and uses funds. It also gives smaller, donor-facing nonprofits visibility and recognition.
+Vetted partner organizations: Official partners pass strict financial audits and get free representation on the platform in return, which builds donor trust and lowers the barrier for small organizations.
+Gamification: Badges, streaks, and leaderboards make giving more engaging and encourage regular donations.
+Why it matters
+Donors give with more confidence because the charities are vetted and the finances are visible.
+Small and mid-sized nonprofits get exposure they can’t afford on their own.
+Matching on personal values makes giving feel more relevant, which encourages donors to keep giving.
+
 ## Phases
 1) Local charities (MVP)
 2) Global expansion + enhanced support
