@@ -9,17 +9,23 @@ Donation Matching Dashboard
 
 
 ## Tasks (for 10/26 - 11/3)
+Ayman and Guarang
 - [ ] Create landing page (UI)
 - [ ] About page
 - [ ] Contact Form
-- [ ] Authentication (Email, google, yahoo
+Shaheer
+- [ ] Authentication (Email, google, yahoo)
 - [ ] database schemas: (user prefs, charity financials (from scrape), etc (tbd for now)
+- [ ] matching algorithm
+Ali
 - [ ] scraper
+- [ ] matching algorithm
+Eeshan
+- [ ] charity ranking algorithm
+TBD
 - [ ] payment processor (stripe)
 
 ## later but necessary for MVP / phase 1 
-- [ ] charity ranking algorithm
-- [ ] matching algorithm
 - [ ] buy a domain name
 - [ ] seperate test and prod endpoints
 
