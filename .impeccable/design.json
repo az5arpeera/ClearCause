@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-05T00:00:00Z",
+  "title": "Design System: Clear Cause",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Annual-Report Paper",
+        "canonical": "oklch(0.972 0.013 84)",
+        "tonalRamp": [
+          "oklch(0.25 0.012 84)",
+          "oklch(0.36 0.014 84)",
+          "oklch(0.48 0.016 84)",
+          "oklch(0.6 0.018 84)",
+          "oklch(0.72 0.02 84)",
+          "oklch(0.85 0.02 84)",
+          "oklch(0.944 0.018 84)",
+          "oklch(0.972 0.013 84)"
+        ]
+      },
+      "paper-sunk": {
+        "role": "neutral",
+        "displayName": "Sunk Paper",
+        "canonical": "oklch(0.944 0.018 84)"
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(0.85 0.02 84)"
+      },
+      "input-stroke": {
+        "role": "neutral",
+        "displayName": "Field Stroke",
+        "canonical": "oklch(0.72 0.025 84)"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Statement Ink",
+        "canonical": "oklch(0.255 0.055 258)",
+        "tonalRamp": [
+          "oklch(0.18 0.045 258)",
+          "oklch(0.255 0.055 258)",
+          "oklch(0.33 0.05 258)",
+          "oklch(0.41 0.045 258)",
+          "oklch(0.5 0.035 258)",
+          "oklch(0.62 0.03 258)",
+          "oklch(0.74 0.035 258)",
+          "oklch(0.9 0.015 258)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Secondary Ink",
+        "canonical": "oklch(0.41 0.045 258)"
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Tertiary Ink",
+        "canonical": "oklch(0.5 0.035 258)"
+      },
+      "forest": {
+        "role": "primary",
+        "displayName": "Ledger Forest",
+        "canonical": "oklch(0.375 0.078 157)",
+        "tonalRamp": [
+          "oklch(0.2 0.045 158)",
+          "oklch(0.3 0.064 158)",
+          "oklch(0.375 0.078 157)",
+          "oklch(0.48 0.08 156)",
+          "oklch(0.6 0.07 155)",
+          "oklch(0.72 0.055 153)",
+          "oklch(0.84 0.04 151)",
+          "oklch(0.915 0.035 150)"
+        ]
+      },
+      "forest-deep": {
+        "role": "primary",
+        "displayName": "Deep Ledger Forest",
+        "canonical": "oklch(0.3 0.064 158)"
+      },
+      "forest-soft": {
+        "role": "primary",
+        "displayName": "Forest Wash",
+        "canonical": "oklch(0.915 0.035 150)"
+      },
+      "money": {
+        "role": "secondary",
+        "displayName": "Money-Went-Here Green",
+        "canonical": "oklch(0.83 0.165 146)",
+        "tonalRamp": [
+          "oklch(0.35 0.09 146)",
+          "oklch(0.45 0.12 146)",
+          "oklch(0.55 0.14 146)",
+          "oklch(0.65 0.16 146)",
+          "oklch(0.74 0.165 146)",
+          "oklch(0.83 0.165 146)",
+          "oklch(0.9 0.11 146)",
+          "oklch(0.96 0.05 146)"
+        ]
+      },
+      "admin": {
+        "role": "neutral",
+        "displayName": "Admin Slate",
+        "canonical": "oklch(0.47 0.05 258)"
+      },
+      "fundraising": {
+        "role": "neutral",
+        "displayName": "Fundraising Slate",
+        "canonical": "oklch(0.74 0.035 258)"
+      },
+      "error": {
+        "role": "error",
+        "displayName": "Correction Red",
+        "canonical": "oklch(0.52 0.17 30)"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The organization or page name; one per page."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The lead statement sentence with its key figure highlighted inline."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings under a 2px forest rule."
+      },
+      "subtitle": {
+        "displayName": "Subtitle",
+        "purpose": "Table captions and sub-section heads."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Serif deks, mission text and program descriptions at 60–62ch."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "All tables, figures and controls, in tabular lining figures."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Column heads, notices and fine print."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "money-sweep",
+        "value": "520ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The highlighter band grows left to right behind a program figure when a gift amount changes. Disabled under prefers-reduced-motion."
+      },
+      {
+        "name": "state-color",
+        "value": "150ms ease",
+        "purpose": "Color transitions on buttons and links."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single primary action, such as continuing a gift.",
+      "html": "<button class=\"ds-btn-primary\">Continue to give $50</button>",
+      "css": ".ds-btn-primary { background: var(--forest, oklch(0.375 0.078 157)); color: var(--paper, oklch(0.972 0.013 84)); height: 44px; padding: 0 20px; border: 0; border-radius: 2px; font-family: 'Libre Franklin Variable', 'Franklin Gothic Medium', sans-serif; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: background 150ms ease; } .ds-btn-primary:hover { background: var(--forest-deep, oklch(0.3 0.064 158)); } .ds-btn-primary:focus-visible { outline: 2px solid var(--forest, oklch(0.375 0.078 157)); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
+    },
+    {
+      "name": "Amount Choice",
+      "kind": "chip",
+      "refersTo": "button-choice",
+      "description": "Preset amount buttons; selected state uses forest, never the money green.",
+      "html": "<div class=\"ds-choices\"><button class=\"ds-choice\">$25</button><button class=\"ds-choice\" aria-pressed=\"true\">$50</button><button class=\"ds-choice\">$100</button></div>",
+      "css": ".ds-choices { display: flex; gap: 6px; } .ds-choice { height: 40px; min-width: 64px; background: var(--paper, oklch(0.972 0.013 84)); color: var(--ink, oklch(0.255 0.055 258)); border: 1px solid oklch(0.72 0.025 84); border-radius: 2px; font-family: 'Libre Franklin Variable', sans-serif; font-size: 0.9375rem; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; transition: border-color 150ms ease, background 150ms ease; } .ds-choice:hover { border-color: var(--forest, oklch(0.375 0.078 157)); } .ds-choice[aria-pressed=true] { background: var(--forest, oklch(0.375 0.078 157)); border-color: var(--forest, oklch(0.375 0.078 157)); color: var(--paper, oklch(0.972 0.013 84)); } .ds-choice:focus-visible { outline: 2px solid var(--forest, oklch(0.375 0.078 157)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Amount Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Currency input with a quiet prefix and forest focus.",
+      "html": "<label class=\"ds-field\"><span>$</span><input placeholder=\"0.00\" inputmode=\"decimal\"></label>",
+      "css": ".ds-field { display: flex; align-items: center; height: 40px; padding: 0 12px; background: var(--paper, oklch(0.972 0.013 84)); border: 1px solid oklch(0.72 0.025 84); border-radius: 2px; font-family: 'Libre Franklin Variable', sans-serif; font-size: 0.9375rem; color: oklch(0.5 0.035 258); } .ds-field input { border: 0; background: transparent; outline: none; padding-left: 6px; width: 100%; font: inherit; color: var(--ink, oklch(0.255 0.055 258)); caret-color: oklch(0.375 0.078 157); font-variant-numeric: tabular-nums; } .ds-field:focus-within { outline: 2px solid oklch(0.375 0.078 157); outline-offset: 2px; }"
+    },
+    {
+      "name": "Masthead",
+      "kind": "nav",
+      "refersTo": "masthead",
+      "description": "Forest-deep frame band with wordmark and primary links; current page underlined in paper.",
+      "html": "<header class=\"ds-mast\"><b>Clear Cause</b><nav><a aria-current=\"page\" href=\"#\">Matches</a><a href=\"#\">Charities</a><a href=\"#\">Your giving</a></nav></header>",
+      "css": ".ds-mast { display: flex; align-items: center; gap: 32px; height: 56px; padding: 0 24px; background: oklch(0.3 0.064 158); color: oklch(0.972 0.013 84); font-family: 'Libre Franklin Variable', sans-serif; } .ds-mast b { font-size: 1.0625rem; letter-spacing: -0.01em; } .ds-mast nav { display: flex; gap: 24px; height: 100%; font-size: 0.875rem; } .ds-mast a { display: flex; align-items: center; color: oklch(0.972 0.013 84 / 0.8); text-decoration: none; border-bottom: 2px solid transparent; transition: color 150ms ease; } .ds-mast a:hover { color: oklch(0.972 0.013 84); } .ds-mast a[aria-current=page] { color: oklch(0.972 0.013 84); border-bottom-color: oklch(0.972 0.013 84); }"
+    },
+    {
+      "name": "Statement Table",
+      "kind": "custom",
+      "description": "Ruled label/figure rows closed by a double-ruled total; program money highlighted.",
+      "html": "<table class=\"ds-stmt\"><caption>Went out</caption><tr><th>Programs</th><td><mark>$334,500</mark></td></tr><tr><th>Management and admin</th><td>$39,800</td></tr><tr><th>Fundraising</th><td>$23,900</td></tr><tr class=\"ds-total\"><th>Total expenses</th><td><span>$398,200</span></td></tr></table>",
+      "css": ".ds-stmt { width: 100%; max-width: 360px; border-collapse: collapse; font-family: 'Libre Franklin Variable', sans-serif; font-size: 0.9375rem; color: oklch(0.255 0.055 258); font-variant-numeric: tabular-nums lining-nums; } .ds-stmt caption { text-align: left; font-weight: 700; font-size: 1.125rem; padding-bottom: 8px; } .ds-stmt th { text-align: left; font-weight: 400; padding: 8px 12px 8px 0; } .ds-stmt td { text-align: right; padding: 8px 0; } .ds-stmt tr:not(.ds-total) { border-bottom: 1px solid oklch(0.85 0.02 84); } .ds-stmt mark { background: oklch(0.83 0.165 146); color: inherit; font-weight: 600; padding: 0 2px; } .ds-total th, .ds-total td { font-weight: 600; padding-top: 10px; } .ds-total td span { border-bottom: 3px double oklch(0.255 0.055 258); padding-bottom: 2px; }"
+    },
+    {
+      "name": "Dollar Strip",
+      "kind": "custom",
+      "description": "One dollar as 100 square cents; program cents in money green, overhead in ink slates.",
+      "html": "<div class=\"ds-strip\" role=\"img\" aria-label=\"84 cents to programs, 10 to admin, 6 to fundraising\"><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"p\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"a\"></i><i class=\"f\"></i><i class=\"f\"></i><i class=\"f\"></i><i class=\"f\"></i><i class=\"f\"></i><i class=\"f\"></i></div>",
+      "css": ".ds-strip { display: grid; grid-template-columns: repeat(50, minmax(0, 1fr)); gap: 3px; width: 100%; max-width: 640px; } .ds-strip i { aspect-ratio: 1; display: block; } .ds-strip .p { background: oklch(0.83 0.165 146); } .ds-strip .a { background: oklch(0.47 0.05 258); } .ds-strip .f { background: oklch(0.74 0.035 258); }"
+    },
+    {
+      "name": "Section Opener",
+      "kind": "custom",
+      "description": "2px forest rule, plain title, serif dek. No label above the heading.",
+      "html": "<div class=\"ds-opener\"><h2>Where the money went</h2><p>The full fiscal 2025 statement, then the most recent payments Northside made to run its programs.</p></div>",
+      "css": ".ds-opener { border-top: 2px solid oklch(0.375 0.078 157); padding-top: 16px; max-width: 62ch; color: oklch(0.255 0.055 258); } .ds-opener h2 { margin: 0; font-family: 'Libre Franklin Variable', sans-serif; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.015em; line-height: 1.25; } .ds-opener p { margin: 8px 0 0; font-family: 'Source Serif 4 Variable', Georgia, serif; font-size: 1.0625rem; line-height: 1.6; color: oklch(0.41 0.045 258); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Statement of Funds",
+    "overview": "Clear Cause reads like a well-made annual report or a good bank statement, not a startup landing page. Every surface is a document with a forest-green frame around it. Inside, ink-navy figures sit on warm paper in ruled rows, with totals double-underlined the way accountants close a column. Numbers are the hero. Prose explains them, and decoration never stands in for them.\n\nThe world owns the frame: the forest masthead and colophon, the forest rule that opens each section, and the ruled tables. The reading column stays calm: a book serif at a real measure, high contrast, and nothing moving behind it. Color is restrained (paper, ink, forest), with one exception that carries meaning: a bright green highlighter marks money that reached programs, and is used for nothing else.",
+    "keyCharacteristics": [
+      "Warm paper ground, ink-navy type and figures, and forest green as the structural color.",
+      "Hairline-ruled tables with right-aligned tabular figures and double-ruled totals.",
+      "One bright green, used only as a highlighter behind money that reached programs.",
+      "A grotesk for statements and figures, and a book serif for prose.",
+      "Square corners, flat print, no shadows."
+    ],
+    "rules": [
+      {
+        "name": "The One Highlighter Rule",
+        "body": "The bright green marks only money that reached programs. Never use it for navigation, selection, success states, badges, or decoration. Ask of every bright-green pixel: did money go here?",
+        "section": "colors"
+      },
+      {
+        "name": "The Focal Figure Rule",
+        "body": "A highlighter loses its meaning when everything is highlighted. Mark totals and program lines, not every row in a ledger.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "Every number that could sit in a column uses tabular lining figures (`.figures`), so columns align and amounts can be compared at a glance.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sentence Lead Rule",
+        "body": "The key number is set inside a sentence (\"Of every $1.00… 84¢ went to programs\"), never as a giant isolated figure above a small label.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Print Rule",
+        "body": "If it would not survive being printed on uncoated stock, it does not belong: no shadows, glows, blur, or glass.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do set every figure in tabular lining figures and right-align it in its column.",
+      "Do open each section with the 2px forest rule and a plain heading. Let the heading speak without a label above it.",
+      "Do close every column of money with a double-ruled total.",
+      "Do keep audited facts and self-reported counts visibly separate, solid against dashed, everywhere they appear.",
+      "Do label sample or illustrative data plainly, above the fold.",
+      "Do theme the browser surfaces: money-green text selection, forest focus rings and caret, paper-toned scrollbars."
+    ],
+    "donts": [
+      "Don't use the money green for anything except money that reached programs: not nav states, success, badges, or selection controls.",
+      "Don't use purple, gradients, glassmorphism, or glowing shadows.",
+      "Don't use emoji as icons. Icons come from Lucide at a consistent 1.75–2.5 stroke.",
+      "Don't build a centered hero with a big headline and two buttons, or rows of three identical rounded cards.",
+      "Don't use stock \"AI\" illustrations.",
+      "Don't set Inter as the only font, or round everything to 2xl. Corners stay at 2px.",
+      "Don't put a big isolated number over a small label. Put the figure inside a sentence or a table."
+    ]
+  }
+}

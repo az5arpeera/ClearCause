@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Impeccable runtime captures
+.impeccable/review/
+.impeccable/config.local.json
