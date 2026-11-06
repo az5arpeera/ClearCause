@@ -1,0 +1,179 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/libre-franklin/wght.css";
+@import "@fontsource-variable/source-serif-4/opsz.css";
+@import "@fontsource-variable/source-serif-4/opsz-italic.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Libre Franklin Variable", "Franklin Gothic Medium", "Arial Narrow", sans-serif;
+  --font-heading: var(--font-sans);
+  --font-serif: "Source Serif 4 Variable", Georgia, serif;
+
+  /* Clear Cause world */
+  --color-paper: var(--paper);
+  --color-paper-sunk: var(--paper-sunk);
+  --color-rule: var(--rule);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-forest: var(--forest);
+  --color-forest-deep: var(--forest-deep);
+  --color-forest-soft: var(--forest-soft);
+  --color-money: var(--money);
+  --color-admin: var(--admin);
+  --color-fundraising: var(--fundraising);
+
+  /* shadcn roles, mapped onto the world */
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+
+  --radius-sm: 1px;
+  --radius-md: 2px;
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
+}
+
+:root {
+  /* Ground: warm paper, like an annual report's uncoated stock */
+  --paper: oklch(0.972 0.013 84);
+  --paper-sunk: oklch(0.944 0.018 84);
+  --rule: oklch(0.85 0.02 84);
+
+  /* Ink: dark navy for text and data */
+  --ink: oklch(0.255 0.055 258);
+  --ink-2: oklch(0.41 0.045 258);
+  --ink-3: oklch(0.5 0.035 258);
+
+  /* Forest: the main color */
+  --forest: oklch(0.375 0.078 157);
+  --forest-deep: oklch(0.3 0.064 158);
+  --forest-soft: oklch(0.915 0.035 150);
+
+  /* Money went here: the only bright green, used as a highlighter */
+  --money: oklch(0.83 0.165 146);
+
+  /* Overhead shares in the dollar strip */
+  --admin: oklch(0.47 0.05 258);
+  --fundraising: oklch(0.74 0.035 258);
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--forest);
+  --primary-foreground: var(--paper);
+  --secondary: var(--paper-sunk);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-sunk);
+  --muted-foreground: var(--ink-2);
+  --accent: var(--forest-soft);
+  --accent-foreground: var(--forest-deep);
+  --destructive: oklch(0.52 0.17 30);
+  --border: var(--rule);
+  --input: oklch(0.72 0.025 84);
+  --ring: var(--forest);
+  --radius: 2px;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    font-feature-settings: "kern", "liga";
+    scrollbar-color: var(--rule) var(--paper);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  ::selection {
+    background: var(--money);
+    color: var(--ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--forest);
+    outline-offset: 2px;
+  }
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+  input {
+    caret-color: var(--forest);
+  }
+}
+
+@layer components {
+  /* Figures in statements always line up */
+  .figures {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  /* The highlighter: a bright-green mark behind money that reached programs */
+  .money-mark {
+    background-image: linear-gradient(var(--money), var(--money));
+    background-repeat: no-repeat;
+    background-position: 0 88%;
+    background-size: 100% 78%;
+    padding-inline: 0.12em;
+    margin-inline: -0.12em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .money-mark-sweep {
+    animation: money-sweep 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes money-sweep {
+  from {
+    background-size: 0% 78%;
+  }
+  to {
+    background-size: 100% 78%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .money-mark-sweep {
+    animation: none;
+  }
+}
+
+/* The landing page trail draws downward with scroll; fully drawn by default */
+.trail-line {
+  transform: scaleY(var(--p, 1));
+  transform-origin: top;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .trail-line {
+    transform: none;
+  }
+}
