@@ -143,6 +143,46 @@
       "label": {
         "displayName": "Label",
         "purpose": "Column heads, notices and fine print."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Photo credits and fine print."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Month letters in the streak strip only."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Chips, cause buttons and compact controls."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The Clear Cause wordmark beside the logo mark."
+      },
+      "marketing-hero": {
+        "displayName": "Marketing hero",
+        "purpose": "One promise per marketing page, set left (3.25rem tablet, 2.5rem mobile)."
+      },
+      "marketing-close": {
+        "displayName": "Marketing close",
+        "purpose": "The final call to action's question."
+      },
+      "marketing-section": {
+        "displayName": "Marketing section",
+        "purpose": "Section headings on the money trail (1.875rem mobile)."
+      },
+      "counter": {
+        "displayName": "Counter",
+        "purpose": "Platform totals, number above label (1.75rem mobile)."
+      },
+      "pull-quote": {
+        "displayName": "Pull quote",
+        "purpose": "A plain-words match explanation in curly quotes."
+      },
+      "entry-title": {
+        "displayName": "Entry title",
+        "purpose": "An organization's name in a spotlight entry."
       }
     },
     "shadows": [],
@@ -156,6 +196,11 @@
         "name": "state-color",
         "value": "150ms ease",
         "purpose": "Color transitions on buttons and links."
+      },
+      {
+        "name": "trail-draw",
+        "value": "transform: scaleY(var(--p)) from the top, driven by scroll to a tip at 78% of the viewport",
+        "purpose": "The money trail draws downward as the reader scrolls. Fully drawn by default and under reduced motion."
       }
     ],
     "breakpoints": [
@@ -178,6 +223,29 @@
     ]
   },
   "components": [
+    {
+      "name": "Logo",
+      "kind": "custom",
+      "refersTo": "logo-wordmark",
+      "description": "Squared-C trail mark with two-tone 'Clear Cause' wordmark, on forest-deep.",
+      "html": "<a class=\"ds-logo\" href=\"#\"><svg viewBox=\"0 0 32 32\" width=\"32\" height=\"32\" aria-hidden=\"true\"><rect width=\"32\" height=\"32\" rx=\"2\" fill=\"oklch(0.972 0.013 84)\"/><path d=\"M23 8.5 H10.5 V23.5 H23\" fill=\"none\" stroke=\"oklch(0.375 0.078 157)\" stroke-width=\"3.5\"/><rect x=\"20.5\" y=\"5.5\" width=\"6\" height=\"6\" fill=\"oklch(0.3 0.064 158)\"/><rect x=\"20.5\" y=\"20.5\" width=\"6\" height=\"6\" fill=\"oklch(0.375 0.078 157)\"/></svg><span>Clear <em>Cause</em></span></a>",
+      "css": ".ds-logo { display: inline-flex; align-items: center; gap: 10px; padding: 14px 18px; background: oklch(0.3 0.064 158); text-decoration: none; } .ds-logo svg { transition: transform 300ms ease-out; } .ds-logo:hover svg { transform: rotate(-3deg); } .ds-logo span { font-family: 'Libre Franklin Variable', sans-serif; font-size: 1.3125rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; color: oklch(0.972 0.013 84); } .ds-logo em { font-style: normal; color: oklch(0.915 0.035 150); } .ds-logo:focus-visible { outline: 2px solid oklch(0.972 0.013 84); outline-offset: 2px; }"
+    },
+    {
+      "name": "Cause Tile",
+      "kind": "chip",
+      "refersTo": "cause-tile",
+      "description": "Photo over a label strip; picked tiles get a paper outline and paper label with a check.",
+      "html": "<div class=\"ds-tiles\"><div class=\"ds-tile on\"><i></i><span>Hunger ✓</span></div><div class=\"ds-tile\"><i></i><span>Housing</span></div></div>",
+      "css": ".ds-tiles { display: flex; gap: 8px; padding: 16px; background: oklch(0.3 0.064 158); } .ds-tile { width: 150px; border-radius: 2px; overflow: hidden; background: oklch(0.375 0.078 157); font-family: 'Libre Franklin Variable', sans-serif; font-size: 0.875rem; font-weight: 600; } .ds-tile i { display: block; aspect-ratio: 7 / 5; background: oklch(0.55 0.04 140); opacity: 0.6; } .ds-tile span { display: block; padding: 8px 10px; color: oklch(0.972 0.013 84); } .ds-tile.on { outline: 3px solid oklch(0.972 0.013 84); } .ds-tile.on i { opacity: 1; } .ds-tile.on span { background: oklch(0.972 0.013 84); color: oklch(0.3 0.064 158); }"
+    },
+    {
+      "name": "Trail Stop",
+      "kind": "custom",
+      "description": "The money trail with a numbered square stop and solid vs dashed ticks.",
+      "html": "<div class=\"ds-trail\"><b class=\"ds-line\"></b><span class=\"ds-stop\">1</span><p class=\"ds-row\"><i></i>84¢ Programs</p><p class=\"ds-row dashed\"><i></i>486,000 lb (reported)</p></div>",
+      "css": ".ds-trail { position: relative; padding: 16px 0 16px 64px; background: oklch(0.972 0.013 84); font-family: 'Libre Franklin Variable', sans-serif; color: oklch(0.255 0.055 258); } .ds-line { position: absolute; left: 31px; top: 0; bottom: 0; width: 2px; background: oklch(0.375 0.078 157); } .ds-stop { position: absolute; left: 19px; top: 14px; width: 26px; height: 26px; display: grid; place-items: center; background: oklch(0.375 0.078 157); border: 3px solid oklch(0.972 0.013 84); color: oklch(0.972 0.013 84); font-size: 0.75rem; font-weight: 700; box-sizing: border-box; } .ds-row { position: relative; margin: 34px 0 0; font-size: 0.9375rem; } .ds-row + .ds-row { margin-top: 12px; } .ds-row i { position: absolute; left: -32px; top: 50%; width: 26px; border-top: 2px solid oklch(0.375 0.078 157); } .ds-row.dashed i { border-top: 2px dashed oklch(0.5 0.035 258); }"
+    },
     {
       "name": "Primary Button",
       "kind": "button",
@@ -244,6 +312,11 @@
     ],
     "rules": [
       {
+        "name": "The Band Tone Rule",
+        "body": "A band never introduces a new hue. Forest-deep, ink and forest-soft are the only band grounds, and money green is never a ground.",
+        "section": "colors"
+      },
+      {
         "name": "The One Highlighter Rule",
         "body": "The bright green marks only money that reached programs. Never use it for navigation, selection, success states, badges, or decoration. Ask of every bright-green pixel: did money go here?",
         "section": "colors"
@@ -275,7 +348,9 @@
       "Do close every column of money with a double-ruled total.",
       "Do keep audited facts and self-reported counts visibly separate, solid against dashed, everywhere they appear.",
       "Do label sample or illustrative data plainly, above the fold.",
-      "Do theme the browser surfaces: money-green text selection, forest focus rings and caret, paper-toned scrollbars."
+      "Do theme the browser surfaces: money-green text selection, forest focus rings and caret, paper-toned scrollbars.",
+      "Do carry color at page scale on marketing pages with forest, ink and soft bands, alternating with paper.",
+      "Do caption every stock photo, and say \"not the organization\" beside a named org."
     ],
     "donts": [
       "Don't use the money green for anything except money that reached programs: not nav states, success, badges, or selection controls.",

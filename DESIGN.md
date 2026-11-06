@@ -57,6 +57,91 @@ typography:
     fontSize: "0.8125rem"
     fontWeight: 500
     lineHeight: 1.4
+  caption:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 400
+    lineHeight: 1.4
+  micro:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "0.625rem"
+    fontWeight: 600
+    lineHeight: 1
+  control:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 500
+    lineHeight: 1.3
+  wordmark:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "1.3125rem"
+    fontWeight: 800
+    lineHeight: 1
+    letterSpacing: "-0.03em"
+  marketing-hero:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "4rem"
+    fontWeight: 700
+    lineHeight: 1.02
+    letterSpacing: "-0.032em"
+  marketing-hero-tablet:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "3.25rem"
+    fontWeight: 700
+    lineHeight: 1.02
+    letterSpacing: "-0.032em"
+  marketing-hero-mobile:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "2.5rem"
+    fontWeight: 700
+    lineHeight: 1.02
+    letterSpacing: "-0.032em"
+  marketing-close:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "3rem"
+    fontWeight: 700
+    lineHeight: 1.05
+    letterSpacing: "-0.03em"
+  marketing-section:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "2.25rem"
+    fontWeight: 700
+    lineHeight: 1.1
+    letterSpacing: "-0.025em"
+  marketing-section-mobile:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "1.875rem"
+    fontWeight: 700
+    lineHeight: 1.1
+    letterSpacing: "-0.025em"
+  counter:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "2rem"
+    fontWeight: 700
+    lineHeight: 1.15
+    letterSpacing: "-0.02em"
+    fontFeature: "\"tnum\", \"lnum\""
+  counter-mobile:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "1.75rem"
+    fontWeight: 700
+    lineHeight: 1.15
+    letterSpacing: "-0.02em"
+  pull-quote:
+    fontFamily: "Source Serif 4 Variable, Georgia, serif"
+    fontSize: "1.625rem"
+    fontWeight: 400
+    lineHeight: 1.45
+  pull-quote-mobile:
+    fontFamily: "Source Serif 4 Variable, Georgia, serif"
+    fontSize: "1.375rem"
+    fontWeight: 400
+    lineHeight: 1.45
+  entry-title:
+    fontFamily: "Libre Franklin Variable, Franklin Gothic Medium, Arial Narrow, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 700
+    lineHeight: 1.3
 rounded:
   sm: "1px"
   md: "2px"
@@ -99,6 +184,26 @@ components:
     backgroundColor: "{colors.paper-sunk}"
     textColor: "{colors.ink}"
     padding: "16px 20px 20px"
+  logo-wordmark:
+    textColor: "{colors.paper}"
+    typography: "{typography.wordmark}"
+  band-forest:
+    backgroundColor: "{colors.forest-deep}"
+    textColor: "{colors.paper}"
+  band-ink:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.paper}"
+  band-soft:
+    backgroundColor: "{colors.forest-soft}"
+    textColor: "{colors.ink}"
+  cause-tile-selected:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.forest-deep}"
+    rounded: "{rounded.md}"
+  cause-tile:
+    backgroundColor: "{colors.forest}"
+    textColor: "{colors.paper}"
+    rounded: "{rounded.md}"
 ---
 
 # Design System: Clear Cause
@@ -143,7 +248,16 @@ A restrained print palette: tinted paper and ink, a forest green that carries st
 - **Admin Slate** (admin) / **Fundraising Slate** (fundraising): The overhead shares in the dollar strip and its legend. Ink-family tones, so overhead never reads as "money went here".
 - **Correction Red** (error): Validation errors on inputs, and nothing else.
 
+### Bands
+Marketing pages carry color at page scale through full-width bands rather than accents. Each band is one existing token used as a ground:
+- **Forest band** (forest-deep ground, paper text, secondary text at 80% paper): for the product's own mechanism, such as how matching works.
+- **Ink band** (navy ground, paper text): for trust and verification, such as the audit explainer and the seal.
+- **Soft band** (forest-soft ground, ink text): for quiet, personal moments, such as the streak strip.
+- **Paper** stays the default ground. Bands alternate with paper, and two dark bands may sit back to back only when their topics belong together.
+
 ### Named Rules
+**The Band Tone Rule.** A band never introduces a new hue. Forest-deep, ink and forest-soft are the only band grounds, and money green is never a ground.
+
 **The One Highlighter Rule.** The bright green marks only money that reached programs. Never use it for navigation, selection, success states, badges, or decoration. Ask of every bright-green pixel: did money go here?
 
 **The Focal Figure Rule.** A highlighter loses its meaning when everything is highlighted. Mark totals and program lines, not every row in a ledger.
@@ -163,6 +277,16 @@ A restrained print palette: tinted paper and ink, a forest green that carries st
 - **Body** (Source Serif 4, 400, 1.0625rem, line-height 1.6, max 60–62ch): Section deks, mission text, and program descriptions.
 - **Data** (Libre Franklin, 400–600, 0.9375rem, tabular lining figures): Every table, figure, and control.
 - **Label** (500, 0.8125rem): Column heads, notices, and fine print.
+
+### Marketing scale
+Marketing pages (the landing page) step up from the product ramp, in the same faces:
+- **Marketing hero** (700, 4rem desktop, 3.25rem tablet, 2.5rem mobile; line-height 1.02; tracking -0.032em): one promise per page, set left, never centered over buttons.
+- **Marketing close** (700, 3rem; 2.25rem mobile): the final call to action's question.
+- **Marketing section** (700, 2.25rem; 1.875rem mobile; tracking -0.025em): section headings on the trail.
+- **Counter** (700, 2rem; 1.75rem mobile, tabular): sample or real platform totals, number above its label.
+- **Pull quote** (Source Serif 4, 1.625rem; 1.375rem mobile): a plain-words explanation in curly quotes.
+- **Entry title** (700, 1.25rem): an organization's name in a spotlight entry.
+- **Control** (500, 0.875rem), **caption** (0.75rem) and **micro** (600, 0.625rem, the streak's month letters) round out the small end.
 
 ### Named Rules
 **The Tabular Figures Rule.** Every number that could sit in a column uses tabular lining figures (`.figures`), so columns align and amounts can be compared at a glance.
@@ -186,7 +310,7 @@ This system is flat. There are no shadows anywhere. Depth comes from print devic
 
 ## Shapes
 
-Corners are square or nearly square: 2px on buttons, inputs, and inset panels, and none on rules or strip cells. The only round shape is the account initial in the masthead. Borders are 1px hairlines, with two exceptions: 2px forest rules open sections and frame the composer, and a 3px double rule underlines totals. Dashed rules mark self-reported, unaudited information, so the line style itself carries meaning.
+Corners are square or nearly square: 2px on buttons, inputs, inset panels and photos, and none on rules or strip cells. The only round shapes are the account initial in the masthead and the verified-partner seal, which is round because seals are. Trail stops are squares, never dots. Borders are 1px hairlines, with two exceptions: 2px forest rules open sections and frame the composer, and a 3px double rule underlines totals. Dashed rules mark self-reported, unaudited information, so the line style itself carries meaning.
 
 ## Components
 
@@ -203,6 +327,12 @@ Plain, firm and squared, like a form you sign.
 - **Focus:** 2px forest outline on the field wrapper, with a forest caret.
 - **Error:** Correction-red border plus a plain-language message below that names the fix ("Enter an amount of $1 or more."). The primary button is disabled while an error stands.
 
+### Logo
+- **Mark:** a 32px paper square (2px corners) holding a squared "C" drawn as a 3.5px forest stroke: a stretch of the money trail, with a square stop at each end (forest-deep at the top, forest at the bottom).
+- **Wordmark:** "Clear Cause" with a word space, extrabold 1.3125rem at -0.03em tracking. "Clear" is paper and "Cause" forest-soft, set on the forest-deep masthead and footer.
+- **Behavior:** the mark tilts -3° on hover. The logo always links home and is labeled "Clear Cause home".
+- **Don't:** run the words together, recolor the mark, or put the logo on paper without a forest-deep field behind it.
+
 ### Navigation
 - **Masthead:** A 56px forest-deep band with the wordmark and primary links in paper at 80% opacity. The current page gets full paper and a 2px paper underline (never the money green). On mobile the links drop to a second 44px row inside the band.
 - **Breadcrumb:** Ink-2 text, with the parent link underlined in hairline color.
@@ -216,6 +346,21 @@ Date, payee (with its purpose as a second line), program, and amount, under an i
 
 ### Dollar Strip (signature)
 One dollar drawn as 100 square cents: 50×2 on desktop, 20×5 on mobile, with 3px gaps. Program cents are money green, admin cents admin slate, fundraising cents fundraising slate. A legend table below gives each share in cents and dollars. It carries a full text description for assistive technology.
+
+### Money Trail (signature, marketing pages)
+- **The line:** a 2px line in a left track (12, 20 or 32px in from the content column at mobile, sm and lg) that runs continuously through every section of a marketing page, ending on a 26px square terminal stop at the final call.
+- **Stops:** forest squares with a 3px ring in the band's own ground. A numbered stop marks a sequential step.
+- **Ticks:** reach from the line to the content. Solid ticks lead to audited money. Dashed ticks lead to counts that are only reported.
+- **Bands:** on forest and ink bands the line, stops and ticks turn paper. Each band supplies `--trail-c`, `--band`, `--stop-text`, `--dash-c` and `--sub`.
+- **Motion:** the line draws downward with scroll, to a tip at 78% of the viewport height. It is fully drawn by default and under reduced motion.
+
+### Cause Tiles
+A photo (7:5) over a label strip, arranged 4 across on desktop and 2 on mobile. Unpicked tiles show a dimmed photo over a forest label. A picked tile shows a full-color photo with a paper outline and a paper label with a check.
+
+### Photography
+- **Source and credit:** real stock photos of work in the field, never illustrations. Each shipping photo records its source and credit in the data module, and the page credits it.
+- **Honest captions:** a photo beside a named organization is captioned "Stock photo, not the organization" until real photos exist.
+- **Shape:** corners are 2px. Aspect ratios vary on purpose (16:10, 4:5, square) so a row of entries never reads as identical cards.
 
 ### Audited vs. Reported
 Audited facts sit under a solid ink rule with a check icon. Self-reported counts sit under dashed rules with a dashed-circle icon. Any figure derived from a reported count carries the dashed-circle marker wherever it appears.
@@ -232,6 +377,8 @@ A sunk-paper panel under a 2px forest rule, holding the presets, a custom amount
 - **Do** keep audited facts and self-reported counts visibly separate, solid against dashed, everywhere they appear.
 - **Do** label sample or illustrative data plainly, above the fold.
 - **Do** theme the browser surfaces: money-green text selection, forest focus rings and caret, paper-toned scrollbars.
+- **Do** carry color at page scale on marketing pages with forest, ink and soft bands, alternating with paper.
+- **Do** caption every stock photo, and say "not the organization" beside a named org.
 
 ### Don't:
 - **Don't** use the money green for anything except money that reached programs: not nav states, success, badges, or selection controls.

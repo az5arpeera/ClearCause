@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent, type ReactNode } from "react"
 import { BadgeCheck, Check, CircleDashed } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Logo } from "@/components/Logo"
 import { cn } from "@/lib/utils"
 import {
   audited,
@@ -88,22 +89,24 @@ export default function CharityProfile() {
 /* ------------------------------------------------------------------ frame */
 
 function Masthead() {
-  const links = ["Matches", "Charities", "Your giving"]
+  const links = [
+    ["Matches", "/matches"],
+    ["Charities", "/"],
+    ["Your giving", "/matches"],
+  ]
   return (
     <header className="bg-forest-deep text-paper">
       <div className="mx-auto flex max-w-[76rem] flex-wrap items-center gap-x-8 px-4 sm:h-14 sm:flex-nowrap sm:px-6 lg:px-10">
-        <a href="#" className="flex h-14 items-center text-[1.0625rem] font-bold tracking-[-0.01em] no-underline">
-          Clear Cause
-        </a>
+        <Logo className="h-14" />
         <nav
           aria-label="Primary"
           className="order-last -mx-4 h-11 w-[calc(100%+2rem)] border-t border-paper/15 px-4 sm:order-none sm:mx-0 sm:h-full sm:w-auto sm:border-t-0 sm:px-0"
         >
           <ul className="flex h-full items-stretch gap-6 text-sm">
-            {links.map((label) => (
+            {links.map(([label, href]) => (
               <li key={label} className="flex">
                 <a
-                  href="#"
+                  href={href}
                   aria-current={label === "Matches" ? "page" : undefined}
                   className="flex items-center border-b-2 border-transparent pt-0.5 text-paper/80 no-underline transition-colors hover:text-paper aria-[current=page]:border-paper aria-[current=page]:text-paper"
                 >
@@ -145,7 +148,7 @@ function ProfileHeader() {
   return (
     <header className="pt-6 pb-8 md:pt-8 md:pb-10 lg:pt-10">
       <nav aria-label="Breadcrumb" className="text-sm text-ink-2">
-        <a href="#" className="underline decoration-rule hover:decoration-ink-2">
+        <a href="/matches" className="underline decoration-rule hover:decoration-ink-2">
           Your matches
         </a>
         <span aria-hidden className="px-2 text-ink-3">
@@ -643,7 +646,7 @@ function WhyMatched() {
         </tbody>
       </table>
       <p className="mt-4 text-sm">
-        <a href="#" className="font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
+        <a href="/matches" className="font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
           Edit your giving preferences
         </a>
       </p>

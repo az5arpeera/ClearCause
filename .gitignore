@@ -25,4 +25,5 @@ dist-ssr
 
 # Impeccable runtime captures
 .impeccable/review/
+.impeccable/mocks/
 .impeccable/config.local.json
