@@ -347,3 +347,53 @@
     transition: none;
   }
 }
+
+/* Top-bar bubbles: every link in the glass nav shares one shape with the
+   "Find my matches" button. Plain links are soft paper bubbles; the page's
+   main action is the one solid paper bubble. */
+@layer components {
+  .nav-bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    height: 2.25rem;
+    padding-inline: 0.875rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--paper);
+    text-decoration: none;
+    background-color: color-mix(in oklch, var(--paper) 9%, transparent);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklch, var(--paper) 20%, transparent),
+      inset 0 1px 0 color-mix(in oklch, var(--paper) 16%, transparent);
+    transition:
+      background-color 160ms ease-out,
+      box-shadow 160ms ease-out,
+      color 160ms ease-out;
+  }
+  .nav-bubble:hover {
+    background-color: color-mix(in oklch, var(--paper) 17%, transparent);
+  }
+  .nav-bubble:active {
+    background-color: color-mix(in oklch, var(--paper) 24%, transparent);
+  }
+  .nav-bubble[aria-current="page"] {
+    background-color: color-mix(in oklch, var(--paper) 22%, transparent);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklch, var(--paper) 45%, transparent),
+      inset 0 1px 0 color-mix(in oklch, var(--paper) 24%, transparent);
+    font-weight: 600;
+  }
+  .nav-bubble-primary,
+  .nav-bubble-primary:hover {
+    background-color: var(--paper);
+    color: var(--forest-deep);
+    font-weight: 600;
+    box-shadow: inset 0 1px 0 color-mix(in oklch, var(--paper) 80%, transparent);
+  }
+  .nav-bubble-primary:hover {
+    background-color: var(--forest-soft);
+  }
+}
