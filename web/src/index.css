@@ -177,3 +177,173 @@
     transform: none;
   }
 }
+
+/* ============================================================================
+   Liquid glass: functional layer only (top nav, floating Donate, filter chips).
+   Never on money, tables or statements. Built from the apple-liquid-glass
+   skill's tokens, retuned to the Clear Cause palette.
+   ========================================================================== */
+@layer components {
+  .lg {
+    position: relative;
+    isolation: isolate;
+    -webkit-backdrop-filter: saturate(170%) blur(22px);
+    backdrop-filter: saturate(170%) blur(22px);
+    box-shadow:
+      inset 0 0.5px 0 var(--lg-rim),
+      inset 0 0 0 0.5px var(--lg-rim-2),
+      var(--lg-shadow);
+  }
+
+  /* Forest glass: the nav bar and the Donate button. Paper labels. */
+  .lg-forest {
+    --lg-fill: color-mix(in oklch, var(--forest-deep) 82%, transparent);
+    --lg-refract: color-mix(in oklch, var(--forest-deep) 70%, transparent);
+    --lg-thick: color-mix(in oklch, var(--forest-deep) 96%, transparent);
+    --lg-rim: rgba(255, 255, 255, 0.34);
+    --lg-rim-2: rgba(255, 255, 255, 0.1);
+    --lg-rim-a: rgba(255, 255, 255, 0.55);
+    --lg-rim-b: rgba(255, 255, 255, 0.08);
+    --lg-rim-c: rgba(255, 255, 255, 0.3);
+    --lg-sheen: 0.14;
+    --lg-shadow: 0 10px 30px color-mix(in oklch, var(--ink) 18%, transparent), 0 1px 3px color-mix(in oklch, var(--ink) 12%, transparent);
+    background-color: var(--lg-fill);
+    color: var(--paper);
+  }
+
+  /* Paper glass: the dashboard filter chips. Ink labels. */
+  .lg-paper {
+    --lg-fill: color-mix(in oklch, var(--paper) 62%, transparent);
+    --lg-refract: color-mix(in oklch, var(--paper) 48%, transparent);
+    --lg-thick: color-mix(in oklch, var(--paper) 94%, transparent);
+    --lg-rim: rgba(255, 255, 255, 0.9);
+    --lg-rim-2: rgba(255, 255, 255, 0.4);
+    --lg-rim-a: rgba(255, 255, 255, 0.95);
+    --lg-rim-b: rgba(255, 255, 255, 0.2);
+    --lg-rim-c: rgba(255, 255, 255, 0.6);
+    --lg-sheen: 0.32;
+    --lg-shadow: 0 6px 18px color-mix(in oklch, var(--ink) 12%, transparent), 0 1px 2px color-mix(in oklch, var(--ink) 10%, transparent);
+    background-color: var(--lg-fill);
+    color: var(--ink);
+  }
+
+  /* Specular sheen across the top: what makes it read as glass, not tint. */
+  .lg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, var(--lg-sheen)) 0%,
+      rgba(255, 255, 255, calc(var(--lg-sheen) * 0.2)) 34%,
+      transparent 62%
+    );
+  }
+
+  /* The rim: brightest upper-left, faint along the sides, up again lower-right. */
+  .lg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(135deg, var(--lg-rim-a) 0%, var(--lg-rim-b) 45%, var(--lg-rim-c) 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  }
+
+  /* While refraction.js bends the backdrop, thin the tint so the bend shows.
+     Glass that carries words (the nav) keeps its full tint for contrast. */
+  .lg.is-refracting {
+    background-color: var(--lg-refract);
+  }
+  .lg.lg-text.is-refracting {
+    background-color: var(--lg-fill);
+  }
+
+  /* A selected chip: emphasis goes on the background, solid forest. */
+  .lg.lg-selected,
+  .lg.lg-selected.is-refracting {
+    background-color: var(--forest);
+    color: var(--paper);
+  }
+
+  /* Mirror mode (refraction.js in Safari and Firefox). Class names are the
+     script's own. */
+  .lg-refract-mirror,
+  .lg-refract-tint {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .lg-refract-bend {
+    position: absolute;
+    inset: 0;
+  }
+  .lg > .lg-refract-tint {
+    background-color: var(--lg-refract);
+  }
+  .lg.lg-text > .lg-refract-tint {
+    background-color: var(--lg-fill);
+  }
+  .lg.lg-selected > .lg-refract-tint {
+    background-color: var(--forest);
+  }
+}
+
+/* Frosted fallback 1: browsers with no backdrop-filter at all get an
+   opaque fill instead of a thin, unreadable tint. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .lg {
+    background-color: var(--lg-thick);
+  }
+  .lg.lg-selected {
+    background-color: var(--forest);
+  }
+}
+
+/* Frosted fallback 2: the user asked for less transparency. */
+@media (prefers-reduced-transparency: reduce) {
+  .lg,
+  .lg.is-refracting {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: var(--lg-thick);
+  }
+  .lg::after {
+    display: none;
+  }
+  .lg.lg-selected {
+    background-color: var(--forest);
+  }
+}
+
+/* The floating Donate button rises into place once; no animated blur. */
+.lg-float {
+  transition:
+    opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    translate 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 320ms,
+    filter 200ms ease-out,
+    scale 160ms ease-out;
+}
+.lg-float[data-hidden="true"] {
+  opacity: 0;
+  translate: 0 16px;
+  pointer-events: none;
+  visibility: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lg-float {
+    transition: none;
+  }
+}

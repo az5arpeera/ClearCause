@@ -20,7 +20,7 @@ export const counters = [
   { value: "$2.4M", label: "given through matches" },
   { value: "312", label: "vetted partners" },
   { value: "68%", label: "of partners spend under $1M a year" },
-  { value: "84¢", label: "median to programs, per $1" },
+  { value: "82¢", label: "median to programs, per $1" },
 ]
 
 /**
@@ -81,6 +81,12 @@ export const photos = {
     alt: "Fresh apples and herbs in wooden crates",
     credit: "malwina nogaj",
     source: "https://unsplash.com/photos/fresh-apples-and-herbs-in-wooden-crates-outdoors-8IrVwcDLsgU",
+  },
+  backdrop: {
+    src: "https://images.unsplash.com/photo-1558625702-73e75fca01a0",
+    alt: "",
+    credit: "Lee Soo hyun",
+    source: "https://unsplash.com/photos/a-tree-branch-with-green-leaves-against-a-blue-sky-ltBQHg8oUxY",
   },
   garden: {
     src: "https://images.unsplash.com/photo-1788538812809-f22af3a6993a",
@@ -160,11 +166,18 @@ export const orgs: Org[] = [
 /** The sample donor whose dashboard previews the product. */
 export const donor = {
   name: "Sam",
-  preferences: ["Hunger", "Kids and schools", "Within 25 miles", "Small organizations"],
+  preferences: ["Hunger", "Kids and schools", "Within 25 miles", "Small organizations", "Audited only"],
   matches: [
-    { org: "northside", fit: "4 of 4" },
-    { org: "riverbend", fit: "3 of 4" },
-    { org: "eastgate", fit: "3 of 4" },
+    { org: "northside", fit: "4 of 5", tags: ["hunger", "near"] },
+    { org: "riverbend", fit: "4 of 5", tags: ["kids", "near"] },
+    { org: "eastgate", fit: "3 of 5", tags: ["reuse", "near"] },
+  ],
+  /** Filter chips over the dashboard preview. */
+  filters: [
+    { id: "all", label: "All" },
+    { id: "hunger", label: "Hunger" },
+    { id: "kids", label: "Kids and schools" },
+    { id: "near", label: "Within 25 miles" },
   ],
   gifts: [
     { org: "northside", amount: 250 },

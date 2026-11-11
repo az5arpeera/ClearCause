@@ -27,3 +27,5 @@ dist-ssr
 .impeccable/review/
 .impeccable/mocks/
 .impeccable/config.local.json
+.impeccable/critique/*
+!.impeccable/critique/ignore.md

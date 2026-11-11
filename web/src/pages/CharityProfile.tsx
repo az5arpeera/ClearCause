@@ -2,7 +2,9 @@ import { useId, useState, type FormEvent, type ReactNode } from "react"
 import { BadgeCheck, Check, CircleDashed } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { FloatingDonate } from "@/components/FloatingDonate"
 import { Logo } from "@/components/Logo"
+import { useLiquidGlass } from "@/lib/liquid-glass"
 import { cn } from "@/lib/utils"
 import {
   audited,
@@ -54,7 +56,10 @@ function splitGift(amount: number) {
   return { programs: toPrograms / 100, admin: admin / 100, fundraising: fundraising / 100, byProgram }
 }
 
+const HIDE_DONATE_WHILE = ["#give"]
+
 export default function CharityProfile() {
+  useLiquidGlass()
   return (
     <div className="min-h-svh bg-paper text-ink">
       <a
@@ -71,7 +76,7 @@ export default function CharityProfile() {
 
         <div className="grid gap-x-12 lg:grid-cols-[minmax(0,1fr)_21rem] xl:gap-x-16">
           <Lead />
-          <aside id="give" className="mt-10 scroll-mt-6 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-6 lg:row-start-1 lg:mt-0 lg:self-start">
+          <aside id="give" className="mt-10 scroll-mt-24 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-6 lg:row-start-1 lg:mt-0 lg:self-start">
             <GiftComposer />
           </aside>
           <WhereTheMoneyWent />
@@ -82,6 +87,7 @@ export default function CharityProfile() {
       </main>
 
       <Colophon />
+      <FloatingDonate href="#give" ariaLabel="Donate to Northside: jump to the gift form" hideWhile={HIDE_DONATE_WHILE} className="lg:hidden" />
     </div>
   )
 }
@@ -95,7 +101,7 @@ function Masthead() {
     ["Your giving", "/matches"],
   ]
   return (
-    <header className="bg-forest-deep text-paper">
+    <header className="lg lg-forest lg-text sticky top-0 z-40" data-refract="0.8" data-refract-bezel="10">
       <div className="mx-auto flex max-w-[76rem] flex-wrap items-center gap-x-8 px-4 sm:h-14 sm:flex-nowrap sm:px-6 lg:px-10">
         <Logo className="h-14" />
         <nav
@@ -202,7 +208,7 @@ function Dot() {
 
 function SectionOpener({ id, title, children }: { id: string; title: string; children?: ReactNode }) {
   return (
-    <div id={id} className="scroll-mt-6 border-t-2 border-forest pt-4">
+    <div id={id} className="scroll-mt-24 border-t-2 border-forest pt-4">
       <h2 id={`${id}-title`} className="text-[1.5rem] leading-tight font-bold tracking-[-0.015em]">{title}</h2>
       {children ? <div className="mt-2 max-w-[62ch] font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{children}</div> : null}
     </div>
@@ -219,7 +225,7 @@ function Lead() {
   ] as const
 
   return (
-    <section aria-labelledby="lead-heading" className="lg:col-start-1">
+    <section data-money aria-labelledby="lead-heading" className="lg:col-start-1">
       <h2 id="lead-heading" className="text-[1.625rem] leading-[1.2] font-semibold tracking-[-0.02em] text-balance sm:text-[2.125rem]">
         Of every $1.00 Northside spent in fiscal 2025,{" "}
         <span className="figures money-mark whitespace-nowrap">{cents.programs}¢</span> went straight to its programs.
@@ -462,7 +468,7 @@ function WhereTheMoneyWent() {
       </p>
 
       <h3 className="mt-12 text-lg font-bold tracking-[-0.01em]">Recent payments</h3>
-      <table className="figures mt-3 w-full text-[0.9375rem]">
+      <table data-money className="figures mt-3 w-full text-[0.9375rem]">
         <caption className="sr-only">Payments made in June and late May 2025</caption>
         <thead>
           <tr className="border-b border-ink text-left text-[0.8125rem] text-ink-2">
@@ -527,7 +533,7 @@ function StatementBlock({
   total: { label: string; amount: number }
 }) {
   return (
-    <table className="figures w-full text-[0.9375rem]">
+    <table data-money className="figures w-full text-[0.9375rem]">
       <caption className="pb-2 text-left text-lg font-bold tracking-[-0.01em]">{title}</caption>
       <tbody>
         {rows.map((r) => (
@@ -671,7 +677,7 @@ function Programs() {
               <h3 className="text-lg font-bold tracking-[-0.01em]">{p.name}</h3>
               <p className="mt-2 max-w-[60ch] font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{p.description}</p>
             </div>
-            <dl className="figures grid grid-cols-2 gap-x-4 gap-y-3 self-start text-[0.9375rem] md:grid-cols-1 md:gap-y-2">
+            <dl data-money className="figures grid grid-cols-2 gap-x-4 gap-y-3 self-start text-[0.9375rem] md:grid-cols-1 md:gap-y-2">
               <ProgramFigure label="Spent">
                 <span className="money-mark font-semibold">{whole.format(p.spending)}</span>
                 <span className="text-ink-3"> · {pct(p.spending / expenses.programs)}</span>
