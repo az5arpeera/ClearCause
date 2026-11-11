@@ -7,19 +7,32 @@ import json
 import re
 import sys
 from time import monotonic, sleep
-from urllib.error import HTTPError, URLError
-from urllib.parse import urljoin, urlsplit, urlunsplit
+from urllib.error import HTTPError
+from urllib.parse import unquote, urljoin, urlsplit, urlunsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 from urllib.robotparser import RobotFileParser
+
+if __package__:
+    from .financial_statements import read_highlights
+else:
+    from financial_statements import read_highlights
 
 
 AGENT = "ClearCauseBot"
 MAX_BYTES = 2 * 1024 * 1024
+MAX_PDF_BYTES = 20 * 1024 * 1024
+MAX_REPORT_PAGES = 3
+MAX_STATEMENTS = 5
 REDIRECTS = {301, 302, 303, 307, 308}
 ORGANIZATION_TYPES = {"Organization", "NGO", "NonprofitOrganization", "CharitableOrganization"}
 FINANCIAL_LINK = re.compile(
     r"\b(?:annual[\s_-]+reports?|(?:irs[\s_-]+)?form[\s_-]+990(?:[\s_-]?(?:ez|pf))?"
     r"|(?:audited[\s_-]+)?financial[\s_-]+statements?|audited[\s_-]+financials)\b",
+    re.IGNORECASE,
+)
+REPORTS_PAGE = re.compile(r"\breports?[\s_&-]+(?:and[\s_-]+)?financials?\b", re.IGNORECASE)
+STATEMENT_LINK = re.compile(
+    r"\b(?:financial[\s_-]+statements?|audited[\s_-]+financials?|audit(?:ed)?[\s_-]+reports?)\b",
     re.IGNORECASE,
 )
 
@@ -46,7 +59,7 @@ class Fetcher:
         self.robots = {}
         self.last_request = None
 
-    def fetch(self, url, *, check_robots=True):
+    def fetch(self, url, *, check_robots=True, max_bytes=MAX_BYTES):
         for _ in range(6):
             delay = 1
             if check_robots:
@@ -61,9 +74,9 @@ class Fetcher:
             request = Request(url, headers={"User-Agent": f"{AGENT}/0.1"})
             try:
                 with self.opener.open(request, timeout=10) as response:
-                    body = response.read(MAX_BYTES + 1)
-                    if len(body) > MAX_BYTES:
-                        raise ValueError("Response exceeds 2 MiB")
+                    body = response.read(max_bytes + 1)
+                    if len(body) > max_bytes:
+                        raise ValueError(f"Response exceeds {max_bytes // (1024 * 1024)} MiB")
                     return url, response.headers, body
             except HTTPError as error:
                 with error:
@@ -149,10 +162,15 @@ def organization_nodes(value):
         yield from organization_nodes(value.get("@graph"))
 
 
-def extract_charity(html, source_url):
+def parse_html(html):
     page = CharityPage()
     page.feed(html)
     page.close()
+    return page
+
+
+def extract_charity(html, source_url):
+    page = parse_html(html)
     organizations = list(organization_nodes(page.json_ld))
     organization = next((entry for entry in organizations if clean_text(entry.get("name"))), {})
     address = organization.get("address")
@@ -167,11 +185,12 @@ def extract_charity(html, source_url):
 
     financial_links = {}
     for href, label in page.links:
-        if FINANCIAL_LINK.search(label) or FINANCIAL_LINK.search(href):
-            try:
-                url = web_url(urljoin(source_url, href))
-            except ValueError:
-                continue
+        try:
+            url = web_url(urljoin(source_url, href))
+        except ValueError:
+            continue
+        link_text = f"{label} {unquote(urlsplit(url).path)}"
+        if FINANCIAL_LINK.search(link_text) or REPORTS_PAGE.search(link_text) or STATEMENT_LINK.search(link_text):
             financial_links.setdefault(url, {"url": url, "label": label or None})
 
     return {
@@ -184,6 +203,77 @@ def extract_charity(html, source_url):
         "scrapedAt": datetime.now(timezone.utc).isoformat(),
         "financialLinks": list(financial_links.values()),
     }
+
+
+def is_pdf_url(url):
+    return unquote(urlsplit(url).path).lower().endswith(".pdf")
+
+
+def discover_statements(fetcher, record):
+    statements = {}
+    reports_pages = {}
+
+    for link in record["financialLinks"]:
+        url, label = link["url"], link["label"]
+        if is_pdf_url(url):
+            if STATEMENT_LINK.search(f"{label or ''} {unquote(urlsplit(url).path)}"):
+                statements.setdefault(url, (label, None))
+        elif url != record["sourceUrl"]:
+            reports_pages.setdefault(url, label)
+
+    errors = []
+    for url, label in list(reports_pages.items())[:MAX_REPORT_PAGES]:
+        try:
+            final_url, headers, body = fetcher.fetch(url, max_bytes=MAX_PDF_BYTES)
+            if body.startswith(b"%PDF-"):
+                if STATEMENT_LINK.search(f"{label or ''} {unquote(urlsplit(final_url).path)}"):
+                    statements[final_url] = (label, body)
+                continue
+            page = parse_html(decode_html(headers, body))
+            for href, label in page.links:
+                try:
+                    link_url = web_url(urljoin(final_url, href))
+                except ValueError:
+                    continue
+                if STATEMENT_LINK.search(f"{label} {unquote(urlsplit(link_url).path)}"):
+                    if link_url not in {final_url, record["sourceUrl"]} and link_url not in reports_pages:
+                        statements.setdefault(link_url, (label or None, None))
+        except (ValueError, LookupError, OSError, RecursionError) as error:
+            errors.append({"url": url, "error": str(error)})
+    return statements, errors
+
+
+def decode_html(headers, body):
+    if headers.get_content_type() not in {"text/html", "application/xhtml+xml"}:
+        raise ValueError("Expected an HTML response")
+    if len(body) > MAX_BYTES:
+        raise ValueError("HTML response exceeds 2 MiB")
+    return body.decode(headers.get_content_charset() or "utf-8-sig", errors="replace")
+
+
+def collect_financial_statements(fetcher, record):
+    statements, errors = discover_statements(fetcher, record)
+    results = {}
+    for url, (label, body) in list(statements.items())[:MAX_STATEMENTS]:
+        final_url = url
+        try:
+            if body is None:
+                final_url, _, body = fetcher.fetch(url, max_bytes=MAX_PDF_BYTES)
+            if final_url in results:
+                continue
+            if not body.startswith(b"%PDF-"):
+                raise ValueError("Expected a PDF response")
+            highlights = read_highlights(body)
+            results[final_url] = {
+                "url": final_url,
+                "label": label,
+                "status": "extracted" if highlights else "noSupportedFigures",
+                "highlights": highlights,
+            }
+        except (ValueError, OSError, RecursionError) as error:
+            errors.append({"url": final_url, "error": str(error)})
+    record["financialStatements"] = list(results.values())
+    record["financialStatementErrors"] = errors
 
 
 def main():
@@ -202,12 +292,11 @@ def main():
                 continue
             requested.add(url)
             source_url, headers, body = fetcher.fetch(url)
-            if headers.get_content_type() not in {"text/html", "application/xhtml+xml"}:
-                raise ValueError("Expected an HTML response")
-            charset = headers.get_content_charset() or "utf-8-sig"
             if source_url not in records:
-                records[source_url] = extract_charity(body.decode(charset, errors="replace"), source_url)
-        except (ValueError, LookupError, OSError, URLError, RecursionError) as error:
+                record = extract_charity(decode_html(headers, body), source_url)
+                collect_financial_statements(fetcher, record)
+                records[source_url] = record
+        except (ValueError, LookupError, OSError, RecursionError) as error:
             had_errors = True
             print(f"{value}: {error}", file=sys.stderr)
 

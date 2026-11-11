@@ -93,8 +93,11 @@ The matcher in [web/src/lib/matching.ts](web/src/lib/matching.ts) requires at le
 Run from the repository root.
 Replace the example URL with one or more public charity pages.
 
-python scripts/scrape_charities.py https://example.org/about > charity-candidates.json
+python -m pip install -r scripts/requirements.txt
+python scripts/scrape_charities.py https://development.org/ > charity-candidates.json
 
-The scraper reads organization structured data, falls back to page metadata, and collects links labeled as annual reports, financial statements, or Form 990. Each JSON record includes the fetched source URL and timestamp. Unavailable fields are null. The scraper checks robots.txt, spaces out requests, and fetches only the supplied pages and their redirects. Errors go to stderr and produce a nonzero exit code while preserving successful records on stdout.
+The scraper reads organization structured data, falls back to page metadata, and collects financial links. It checks robots.txt and spaces out requests, including on external PDF hosts. For each charity it follows up to three linked reports pages and reads up to five financial statement PDFs, with a 20 MiB download limit and a 30-page scan limit per PDF.
+
+Each entry in `financialStatements` includes the PDF URL and any recognized figures, such as contributions, total expenses, program service expenses, and ending net assets. Each figure includes its fiscal year, the statement row label, and its 1-based PDF page number. Extraction uses the text available in the HTML and PDFs. It covers supported statement of activities and balance sheet layouts. Scanned PDFs, JavaScript-only links, and Form 990 tables are outside its coverage. A readable PDF with no recognized figures has status `noSupportedFigures`. Follow-up errors appear in `financialStatementErrors` while the charity record stays on stdout. Errors fetching or reading a supplied charity page go to stderr and produce a nonzero exit code.
 
 Review the candidate's identity, description, location, and source links before publication. To feed a reviewed record into matching, assign cause IDs from [web/src/data/causes.ts](web/src/data/causes.ts), normalize the state name, and supply an annual budget only when it is documented. The matcher accepts those reviewed fields through its MatchableCharity type. The prototype currently reads its catalog from [web/src/data/sample-matches.ts](web/src/data/sample-matches.ts).
