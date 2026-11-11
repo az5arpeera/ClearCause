@@ -216,14 +216,14 @@ Clear Cause reads like a well-made annual report or a good bank statement, not a
 
 The world owns the frame: the forest masthead and colophon, the forest rule that opens each section, and the ruled tables. The reading column stays calm: a book serif at a real measure, high contrast, and nothing moving behind it. Color is restrained (paper, ink, forest), with one exception that carries meaning: a bright green highlighter marks money that reached programs, and is used for nothing else.
 
-The user rejected these, and they stay rejected: purple, gradients, glassmorphism, glowing shadows, emoji as icons, a centered hero with a big headline and two buttons, rows of three identical rounded cards, stock "AI" illustrations, Inter as the only font, and everything rounded-2xl.
+The user rejected these, and they stay rejected: purple, gradients as surfaces or backgrounds, glowing shadows, emoji as icons, a centered hero with a big headline and two buttons, rows of three identical rounded cards, stock "AI" illustrations, Inter as the only font, and everything rounded-2xl.
 
 **Key Characteristics:**
 - Warm paper ground, ink-navy type and figures, and forest green as the structural color.
 - Hairline-ruled tables with right-aligned tabular figures and double-ruled totals.
 - One bright green, used only as a highlighter behind money that reached programs.
 - A grotesk for statements and figures, and a book serif for prose.
-- Square corners, flat print, no shadows.
+- Square corners and flat print in the content layer, with liquid glass only on the nav, the floating action button and the filter chips.
 
 ## Colors
 
@@ -303,14 +303,45 @@ On-page contents sit in a single ruled row under the page header, scrolling hori
 
 ## Elevation & Depth
 
-This system is flat. There are no shadows anywhere. Depth comes from print devices: tonal insets (sunk paper for the composer and notices), rule weight (hairline rows, ink column-head rules, 2px forest section rules), and the forest bands that frame the page.
+The system has two layers.
+
+**The content layer is flat.** Depth comes from print devices:
+- tonal insets (sunk paper for the composer and notices);
+- rule weight (hairline rows, ink column-head rules, 2px forest section rules);
+- the bands that frame the page.
+
+Every figure, table, statement and card lives here, on solid surfaces.
+
+**The functional layer is liquid glass.** Only three things float on it:
+- the top navigation;
+- the floating action button ("Donate" on a charity profile, "Find my matches" on the landing page);
+- the dashboard's filter chips.
+
+The glass blurs and saturates what's behind it and bends it at the rim. It carries a bright rim that is strongest at the upper left, a soft top sheen and one soft drop shadow. It sits over a soft green-and-blue photo (never a gradient) so it has something to refract.
+
+### Liquid glass recipe
+- **Forest glass** (the nav bar and the floating action button):
+  - tint: forest-deep at 82%, with paper labels;
+  - backdrop: `saturate(170%) blur(22px)`;
+  - rim: a 1px rim with a 0.5px inset highlight;
+  - shadow: `0 10px 30px` of ink at 18%.
+- **Paper glass** (the filter chips): paper at 62%, ink labels, same blur. A selected chip turns solid forest, since emphasis goes on the background.
+- **Refraction:** the skill's `refraction.js` (`data-refract`) bends the live backdrop in Chromium. In Safari and Firefox it bends a mirrored copy of the hero photo (`data-refract-source`), and with neither it falls back to plain blur.
+- **Fallbacks, all required:**
+  - `@supports not (backdrop-filter)` gives an opaque frosted fill (forest at 96%, paper at 94%);
+  - `prefers-reduced-transparency` gives the same opaque fill with refraction off;
+  - `prefers-reduced-motion` means no animated blur.
+- **Shape:** glass controls use a 12px radius. That is enough curve for the rim to bend along, and close enough to the 2px system that they belong to it. The nav bar runs edge to edge with no radius. Glass is never a full pill.
+- **Placement:** the floating action steps aside whenever its page's own call to action is on screen, and whenever it would sit over a region marked `data-money`.
 
 ### Named Rules
-**The Flat Print Rule.** If it would not survive being printed on uncoated stock, it does not belong: no shadows, glows, blur, or glass.
+**The Solid Money Rule.** Money figures, tables and statements never sit on glass, and glass never sits on them as decoration. Glass is for things you press or navigate with, not things you read as evidence.
+
+**The Three Places Rule.** Liquid glass appears in exactly three places: the top nav, the floating action button and the dashboard filter chips. Anything else that frosts is a bug.
 
 ## Shapes
 
-Corners are square or nearly square: 2px on buttons, inputs, inset panels and photos, and none on rules or strip cells. The only round shapes are the account initial in the masthead and the verified-partner seal, which is round because seals are. Trail stops are squares, never dots. Borders are 1px hairlines, with two exceptions: 2px forest rules open sections and frame the composer, and a 3px double rule underlines totals. Dashed rules mark self-reported, unaudited information, so the line style itself carries meaning.
+Corners are square or nearly square: 2px on buttons, inputs, inset panels and photos, and none on rules or strip cells. The only round shapes are the account initial in the masthead and the verified-partner seal, which is round because seals are. Liquid glass controls are the one softened corner, at 12px (see Elevation & Depth). Trail stops are squares, never dots. Borders are 1px hairlines, with two exceptions: 2px forest rules open sections and frame the composer, and a 3px double rule underlines totals. Dashed rules mark self-reported, unaudited information, so the line style itself carries meaning.
 
 ## Components
 
@@ -382,7 +413,8 @@ A sunk-paper panel under a 2px forest rule, holding the presets, a custom amount
 
 ### Don't:
 - **Don't** use the money green for anything except money that reached programs: not nav states, success, badges, or selection controls.
-- **Don't** use purple, gradients, glassmorphism, or glowing shadows.
+- **Don't** use purple, gradients as surfaces or backgrounds, or glowing shadows. The liquid glass rim and sheen are the only gradients.
+- **Don't** put glass anywhere but the top nav, the floating action button and the dashboard filter chips, and never over a money figure.
 - **Don't** use emoji as icons. Icons come from Lucide at a consistent 1.75–2.5 stroke.
 - **Don't** build a centered hero with a big headline and two buttons, or rows of three identical rounded cards.
 - **Don't** use stock "AI" illustrations.

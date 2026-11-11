@@ -1,7 +1,9 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react"
 import { ArrowRight, BadgeCheck, Check, CircleDashed, MapPin, ShieldCheck, Sprout } from "lucide-react"
 
+import { FloatingDonate } from "@/components/FloatingDonate"
 import { Logo } from "@/components/Logo"
+import { useLiquidGlass } from "@/lib/liquid-glass"
 import { cn } from "@/lib/utils"
 import { expenses, programs } from "@/data/sample-charity"
 import {
@@ -70,10 +72,11 @@ function useTrailDrawing() {
   }, [])
 }
 
-type Tone = "paper" | "soft" | "forest" | "ink"
+type Tone = "clear" | "paper" | "soft" | "forest" | "ink"
 
 /** Each band sets the trail's colors so the line reads on any ground. */
 const tones: Record<Tone, { cls: string; vars: Record<string, string> }> = {
+  clear: { cls: "text-ink", vars: { "--band": "var(--paper)", "--trail-c": "var(--forest)", "--stop-text": "var(--paper)", "--dash-c": "var(--ink-3)", "--sub": "var(--ink-2)" } },
   paper: { cls: "bg-paper text-ink", vars: { "--band": "var(--paper)", "--trail-c": "var(--forest)", "--stop-text": "var(--paper)", "--dash-c": "var(--ink-3)", "--sub": "var(--ink-2)" } },
   soft: { cls: "bg-forest-soft text-ink", vars: { "--band": "var(--forest-soft)", "--trail-c": "var(--forest)", "--stop-text": "var(--paper)", "--dash-c": "var(--ink-3)", "--sub": "var(--ink-2)" } },
   forest: { cls: "bg-forest-deep text-paper", vars: { "--band": "var(--forest-deep)", "--trail-c": "var(--paper)", "--stop-text": "var(--forest-deep)", "--dash-c": "color-mix(in oklch, var(--paper) 55%, transparent)", "--sub": "color-mix(in oklch, var(--paper) 80%, transparent)" } },
@@ -104,7 +107,7 @@ function OnTrail({
     <section
       id={id}
       aria-labelledby={labelledBy}
-      className={cn("relative scroll-mt-6", tones[tone].cls)}
+      className={cn("relative scroll-mt-20", tones[tone].cls)}
       style={tones[tone].vars as CSSProperties}
     >
       <div className="mx-auto max-w-[76rem] px-4 sm:px-6 lg:px-10">
@@ -163,6 +166,7 @@ function Tick({ dashed = false, className }: { dashed?: boolean; className?: str
 
 export default function Landing() {
   useTrailDrawing()
+  useLiquidGlass()
   return (
     <div className="min-h-svh overflow-x-clip bg-paper text-ink">
       <a
@@ -182,9 +186,12 @@ export default function Landing() {
         <FinalCall />
       </main>
       <Footer />
+      <FloatingDonate href="#start" label="Find my matches" hideWhile={HIDE_DONATE_WHILE} />
     </div>
   )
 }
+
+const HIDE_DONATE_WHILE = ["#start", "#next"]
 
 function Masthead() {
   const links = [
@@ -193,7 +200,7 @@ function Masthead() {
     ["Partners", "#partners"],
   ]
   return (
-    <header className="bg-forest-deep text-paper">
+    <header className="lg lg-forest lg-text sticky top-0 z-40" data-refract="0.8" data-refract-bezel="10">
       <div className="mx-auto flex h-16 max-w-[76rem] items-center gap-10 px-4 sm:px-6 lg:px-10">
         <Logo />
         <nav aria-label="Primary" className="hidden h-full md:block">
@@ -244,8 +251,10 @@ function Hero() {
   }, [])
 
   return (
+    <>
     <div className="relative">
-      <div className="mx-auto max-w-[76rem] px-4 pt-10 sm:px-6 lg:px-10 lg:pt-16">
+      <HeroBackdrop />
+      <div className="relative mx-auto max-w-[76rem] px-4 pt-10 sm:px-6 lg:px-10 lg:pt-16">
         <h1 className="max-w-[17ch] text-[2.5rem] leading-[1.02] font-bold tracking-[-0.032em] text-balance sm:text-[3.25rem] lg:text-[4rem]">
           Give to the causes you'd actually choose.
         </h1>
@@ -255,7 +264,7 @@ function Hero() {
         </p>
       </div>
 
-      <OnTrail lineTop={lineTop} trackRef={trackRef} className="pt-10 pb-16 lg:pt-12 lg:pb-20" labelledBy="start-heading">
+      <OnTrail tone="clear" lineTop={lineTop} trackRef={trackRef} className="pt-10 pb-14 lg:pt-12 lg:pb-16" labelledBy="start-heading">
         <div className="grid gap-x-12 gap-y-10 lg:grid-cols-[minmax(0,1fr)_20rem] xl:gap-x-16">
           <div className="order-2 lg:order-1">
             <span
@@ -265,16 +274,16 @@ function Hero() {
             />
             <DashboardPreview rowRef={rowRef} />
           </div>
-          <div id="start" className="order-1 scroll-mt-6 lg:order-2">
-            <p className="font-serif text-[1.125rem] leading-[1.6] text-ink-2">
+          <div id="start" className="order-1 scroll-mt-24 self-start border-t-2 border-forest bg-paper px-5 pt-4 pb-5 lg:order-2">
+            <h2 id="start-heading" className="text-xl font-bold tracking-[-0.015em]">
+              Find your matches
+            </h2>
+            <p className="mt-2 font-serif text-[1.0625rem] leading-[1.6] text-ink-2">
               Tell us what you care about. We match you with vetted charities, many of them small, and show you where
               every dollar goes.
             </p>
-            <h2 id="start-heading" className="sr-only">
-              Find your matches
-            </h2>
-            <CausePicker className="mt-6" />
-            <p className="mt-5 text-sm text-ink-2">
+            <CausePicker className="mt-5" />
+            <p className="mt-5 border-t border-rule pt-4 text-sm text-ink-2">
               Run a small nonprofit?{" "}
               <a href="/partners" className="font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
                 Become a partner
@@ -282,8 +291,14 @@ function Hero() {
             </p>
           </div>
         </div>
+      </OnTrail>
+    </div>
 
-        <dl className="figures mt-14 grid grid-cols-2 border-t border-ink md:grid-cols-4">
+      <OnTrail labelledBy="counters-title" className="pt-10 pb-4">
+        <h2 id="counters-title" className="sr-only">
+          Clear Cause in numbers
+        </h2>
+        <dl data-money className="figures grid grid-cols-2 border-t border-ink md:grid-cols-4">
           {counters.map((c) => (
             <div key={c.label} className="border-b border-rule py-4 pr-4 md:border-b-0">
               <dt className="sr-only">{c.label}</dt>
@@ -296,6 +311,27 @@ function Hero() {
           Sample figures. Clear Cause is a prototype, and these totals are illustrative.
         </p>
       </OnTrail>
+    </>
+  )
+}
+
+/**
+ * The soft green-and-blue photo behind the nav, headline and dashboard: it is
+ * what the liquid glass refracts. A solid paper veil keeps it soft and keeps
+ * the headline legible; money stays on the solid dashboard panel above it.
+ */
+function HeroBackdrop() {
+  const p = photos.backdrop
+  return (
+    <div id="hero-backdrop" aria-hidden className="pointer-events-none absolute inset-x-0 -top-16 bottom-0 overflow-hidden">
+      <img
+        src={photoUrl(p.src, 2400, 1400)}
+        alt=""
+        fetchPriority="high"
+        className="absolute inset-0 size-full scale-110 object-cover object-[30%_40%] blur-[7px] saturate-[0.85]"
+      />
+      <div className="absolute inset-0 bg-paper/[0.7]" />
+      <div className="absolute inset-x-0 bottom-0 h-px bg-forest/35" />
     </div>
   )
 }
@@ -307,7 +343,7 @@ function CausePicker({ className }: { className?: string }) {
   return (
     <form action="/matches" method="get" className={className}>
       <fieldset>
-        <legend id={groupId} className="text-sm font-semibold">
+        <legend id={groupId} className="text-[0.9375rem] font-semibold">
           What do you care about?
         </legend>
         <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-labelledby={groupId}>
@@ -320,7 +356,7 @@ function CausePicker({ className }: { className?: string }) {
                 aria-pressed={on}
                 onClick={() => toggle(c.id)}
                 className={cn(
-                  "inline-flex h-9 items-center gap-1.5 rounded-[2px] border px-3 text-[0.875rem] font-medium transition-colors",
+                  "inline-flex h-11 items-center gap-1.5 rounded-[2px] border px-3.5 text-[0.9375rem] font-medium transition-colors sm:h-10",
                   on
                     ? "border-forest bg-forest text-paper"
                     : "border-input bg-paper text-ink hover:border-forest hover:text-forest-deep",
@@ -349,11 +385,41 @@ function CausePicker({ className }: { className?: string }) {
 }
 
 function DashboardPreview({ rowRef }: { rowRef: RefObject<HTMLDivElement | null> }) {
+  const [filter, setFilter] = useState("all")
   const given = donor.gifts.reduce((s, g) => s + g.amount, 0)
   const toPrograms = donor.gifts.reduce((s, g) => s + (g.amount * orgById[g.org].toPrograms) / 100, 0)
+  const shown = donor.matches.filter((m) => filter === "all" || (m.tags as readonly string[]).includes(filter))
   return (
     <figure>
-      <div className="overflow-hidden rounded-[2px] border border-ink/25 bg-paper" role="img" aria-label="Sample dashboard for a donor named Sam: three matched charities and where $600 of gifts went this year.">
+      <div className="mb-2 flex flex-wrap items-center gap-1.5" role="group" aria-labelledby="sam-filter-label">
+        <span id="sam-filter-label" className="mr-1 text-[0.8125rem] font-semibold text-ink">
+          Filter {donor.name}'s matches
+        </span>
+        {donor.filters.map((f) => {
+          const on = filter === f.id
+          return (
+            <button
+              key={f.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => setFilter(f.id)}
+              data-refract="0.9"
+              data-refract-source="#hero-backdrop"
+              className={cn(
+                "lg lg-paper inline-flex h-10 items-center gap-1.5 rounded-[12px] px-3.5 text-[0.8125rem] font-semibold transition-[filter,scale] hover:brightness-[1.04] active:scale-[0.97]",
+                on && "lg-selected",
+              )}
+            >
+              {on ? <Check className="size-3.5" strokeWidth={2.75} aria-hidden /> : null}
+              {f.label}
+            </button>
+          )
+        })}
+        <span className="sr-only" aria-live="polite">
+          Showing {shown.length} of {donor.matches.length} of {donor.name}'s matches
+        </span>
+      </div>
+      <div data-money className="overflow-hidden rounded-t-[2px] border border-ink/25 bg-paper">
         <div className="flex h-10 items-center gap-6 bg-forest px-4 text-[0.8125rem] text-paper/75">
           <span className="font-bold text-paper">{donor.name}'s giving</span>
           <span className="border-b-2 border-paper pt-[11px] pb-[9px] font-semibold text-paper">Matches</span>
@@ -400,7 +466,7 @@ function DashboardPreview({ rowRef }: { rowRef: RefObject<HTMLDivElement | null>
             <p className="text-[0.9375rem] font-bold">Your matches</p>
             <p className="mt-0.5 text-[0.75rem] text-ink-2">{donor.preferences.join(" · ")}</p>
             <ul className="mt-2">
-              {donor.matches.map((m) => {
+              {shown.map((m) => {
                 const o = orgById[m.org]
                 const p = photos[o.photo]
                 return (
@@ -420,7 +486,7 @@ function DashboardPreview({ rowRef }: { rowRef: RefObject<HTMLDivElement | null>
           </div>
         </div>
       </div>
-      <figcaption className="mt-2 text-[0.8125rem] text-ink-3">
+      <figcaption className="rounded-b-[2px] border-x border-b border-ink/25 bg-paper-sunk px-4 py-2 text-[0.8125rem] text-ink-2">
         Sample dashboard. The donor, charities and amounts are illustrative, and the thumbnails are stock photos.
       </figcaption>
     </figure>
@@ -448,7 +514,7 @@ function SectionHead({
       <h2 id={id} className="text-[1.875rem] leading-[1.1] font-bold tracking-[-0.025em] text-balance sm:text-[2.25rem]">
         {title}
       </h2>
-      {children ? <div className="mt-3 font-serif text-[1.0625rem] leading-[1.6] text-[color:var(--sub)] sm:text-[1.125rem]">{children}</div> : null}
+      {children ? <div className="mt-3 max-w-[62ch] font-serif text-[1.0625rem] leading-[1.6] text-[color:var(--sub)] sm:text-[1.125rem]">{children}</div> : null}
     </div>
   )
 }
@@ -466,7 +532,7 @@ function WhereTheMoneyGoes() {
         dollar went.
       </SectionHead>
 
-      <div className="mt-10 grid gap-x-16 gap-y-12 lg:grid-cols-[minmax(0,1fr)_19rem]">
+      <div data-money className="mt-10 grid gap-x-16 gap-y-12 lg:grid-cols-[minmax(0,1fr)_19rem]">
         <div className="figures">
           <ul>
             {overhead.map((o) => (
@@ -797,7 +863,7 @@ function OrgEntry({ org, layout, tickClass }: { org: Org; layout: "wide" | "port
           {org.kind} · {org.place} · {org.budget}
         </p>
         <p className="mt-3 max-w-[48ch] font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{org.note}</p>
-        <dl className="figures mt-4 text-[0.9375rem]">
+        <dl data-money className="figures mt-4 text-[0.9375rem]">
           <div className="flex items-baseline justify-between gap-4 border-t border-ink py-2">
             <dt className="text-ink-2">Spent {org.spent.on}</dt>
             <dd className="money-mark font-semibold whitespace-nowrap">{whole.format(org.spent.amount)}</dd>
@@ -902,7 +968,7 @@ function StreakStrip() {
 
 function FinalCall() {
   return (
-    <OnTrail end labelledBy="final-title" className="pt-16 pb-20 lg:pt-24 lg:pb-28">
+    <OnTrail end id="next" labelledBy="final-title" className="pt-16 pb-20 lg:pt-24 lg:pb-28">
       <div className="relative grid gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:items-start">
         <div className="relative">
           <Stop terminal />
@@ -963,9 +1029,11 @@ function Footer() {
         ))}
       </div>
       <div className="border-t border-paper/15">
-        <p className="mx-auto max-w-[76rem] px-4 py-5 text-[0.8125rem] leading-relaxed text-paper/70 sm:px-6 lg:px-10">
+        <p className="mx-auto max-w-[76rem] px-4 py-5 text-[0.8125rem] leading-relaxed text-pretty text-paper/70 sm:px-6 lg:px-10 [&>span]:block [&>span]:max-w-[78ch]">
+          <span>
           Prototype. The organizations, donor and figures on this page are illustrative, not real. Photos are stock images
           from Unsplash by {Array.from(new Set(Object.values(photos).map((p) => p.credit))).join(", ")}.
+          </span>
         </p>
       </div>
     </footer>
