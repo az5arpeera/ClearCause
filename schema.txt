@@ -1,0 +1,187 @@
+===============================================================================
+ ClearCause — Database Schema (Phase 1 / MVP: Local charities)
+===============================================================================
+ Platform : Supabase (PostgreSQL 15+)
+ Source   : supabase/migrations/0001_initial_schema.sql
+ Diagram  : docs/ERD.md  (image: docs/ERD.png)
+
+ Model    : Admin-curated charities. Only DONORS and platform ADMINS log in.
+            Charities are data records (scraper-fed + admin-vetted), not
+            accounts.
+ Security : Row-Level Security (RLS) on every table. Browser uses the anon key
+            (constrained by RLS). Scraper, ranking job, and Stripe webhook use
+            the service-role key (bypasses RLS).
+
+ Legend   : PK = primary key   FK = foreign key   UK = unique
+            [auth] = Supabase-managed    * = not null
+===============================================================================
+
+
+ENUM TYPES
+-------------------------------------------------------------------------------
+ user_role        : donor | admin
+ vetting_status   : pending | vetted | rejected | suspended
+ donation_status  : pending | succeeded | failed | refunded
+
+
+-------------------------------------------------------------------------------
+ auth.users                                                      [auth-managed]
+-------------------------------------------------------------------------------
+ Supabase Auth table. Never written directly. Holds email, password hash, and
+ OAuth identities (Google, etc.). A trigger mirrors each new row into profiles.
+
+   id                     uuid            PK
+   email                  text
+   raw_user_meta_data     jsonb           (full_name, avatar_url from OAuth)
+
+
+-------------------------------------------------------------------------------
+ profiles                             app-level user, 1:1 with auth.users
+-------------------------------------------------------------------------------
+   id                     uuid            PK, FK -> auth.users(id)
+   role                   user_role       * default 'donor'  (ADMIN-SET ONLY)
+   display_name           text
+   avatar_url             text
+   created_at             timestamptz     * default now()
+   updated_at             timestamptz     * default now()
+
+   Trigger  : handle_new_user() inserts a row on each auth signup.
+   Helper   : is_admin() -> bool, used by RLS policies.
+
+
+-------------------------------------------------------------------------------
+ causes                               shared taxonomy for matching
+-------------------------------------------------------------------------------
+   id                     smallint        PK (identity)
+   slug                   text            * UK   ('education', 'climate', ...)
+   name                   text            *
+
+   Seeded with 8 starter causes.
+
+
+-------------------------------------------------------------------------------
+ donor_preferences                    onboarding quiz -> matching inputs
+-------------------------------------------------------------------------------
+   profile_id             uuid            PK, FK -> profiles(id)
+   giving_budget          numeric(10,2)          typical donation size
+   frequency              text                   one_time | monthly | ...
+   location_scope         text                   local | national | global
+   direct_pct_min         smallint               0..100 (min % reaching charity)
+   updated_at             timestamptz     * default now()
+
+
+-------------------------------------------------------------------------------
+ donor_cause_preferences              weighted causes (core matching signal)
+-------------------------------------------------------------------------------
+   profile_id             uuid            PK, FK -> profiles(id)
+   cause_id               smallint        PK, FK -> causes(id)
+   weight                 smallint        * default 1   (1..5 from the quiz)
+
+
+-------------------------------------------------------------------------------
+ charities                            admin-curated + scraper-fed
+-------------------------------------------------------------------------------
+   id                     uuid            PK default gen_random_uuid()
+   name                   text            *
+   ein                    text            UK   (tax id; scraper dedupe key)
+   description            text
+   website_url            text
+   logo_url               text
+   location_city          text
+   location_region        text
+   country                text
+   latitude               double          (for the map)
+   longitude              double
+   vetting_status         vetting_status  * default 'pending'
+   is_partner             boolean         * default false
+   transparency_score     smallint               0..100 (written by ranking job)
+   stripe_account_id      text                   Stripe Connect (for payouts)
+   created_at             timestamptz     * default now()
+   updated_at             timestamptz     * default now()
+
+   Indexes: (vetting_status), (transparency_score desc)
+
+
+-------------------------------------------------------------------------------
+ charity_causes                       M:N charities <-> causes
+-------------------------------------------------------------------------------
+   charity_id             uuid            PK, FK -> charities(id)
+   cause_id               smallint        PK, FK -> causes(id)
+
+
+-------------------------------------------------------------------------------
+ charity_financials                   written by the scraper
+-------------------------------------------------------------------------------
+   id                     bigint          PK (identity)
+   charity_id             uuid            * FK -> charities(id)
+   fiscal_year            smallint        *
+   total_revenue          numeric(14,2)
+   total_expenses         numeric(14,2)
+   program_expenses       numeric(14,2)
+   admin_expenses         numeric(14,2)
+   fundraising_expenses   numeric(14,2)
+   program_expense_ratio  numeric(5,4)           key transparency input
+   source_url             text
+   scraped_at             timestamptz     * default now()
+
+   UK: (charity_id, fiscal_year)  -> idempotent upserts from the scraper
+
+
+-------------------------------------------------------------------------------
+ donations                            Stripe; one donation -> one charity (MVP)
+-------------------------------------------------------------------------------
+   id                     uuid            PK default gen_random_uuid()
+   donor_id               uuid            FK -> profiles(id)  (null on delete)
+   charity_id             uuid            * FK -> charities(id)
+   amount                 numeric(10,2)   *  (> 0)
+   currency               text            * default 'usd'
+   status                 donation_status * default 'pending'
+   stripe_payment_intent_id  text         UK
+   created_at             timestamptz     * default now()
+
+   Indexes: (donor_id, created_at desc), (charity_id)
+   NOTE: rows are written server-side only (Stripe webhook / service role).
+
+
+===============================================================================
+ RELATIONSHIPS
+===============================================================================
+   auth.users   1 --- 1   profiles              (trigger)
+   profiles     1 --- 0..1 donor_preferences
+   profiles     1 --- *    donor_cause_preferences
+   profiles     1 --- *    donations             (as donor)
+   causes       1 --- *    donor_cause_preferences
+   causes       1 --- *    charity_causes
+   charities    1 --- *    charity_causes
+   charities    1 --- *    charity_financials
+   charities    1 --- *    donations             (as recipient)
+
+
+===============================================================================
+ RLS — WHO CAN WRITE WHAT
+===============================================================================
+ Browser (anon key, RLS-constrained):
+   - profiles                : read/update OWN row; cannot change `role`
+   - donor_preferences       : full CRUD on OWN row
+   - donor_cause_preferences : full CRUD on OWN rows
+   (reads) causes, charities (vetted only), charity_causes, charity_financials
+   (reads) donations: OWN only
+
+ Admin (role = 'admin'):
+   - full read/write on profiles, causes, charities, charity_causes
+
+ Service role only (no write policy exists -> browser/admin cannot write):
+   - charity_financials      : the scraper
+   - charities.transparency_score : the ranking job
+   - donations               : the Stripe webhook
+
+
+===============================================================================
+ DEFERRED TO LATER PHASES (intentionally not in the MVP)
+===============================================================================
+   - Gamification       : badges, user_badges, user_streaks, leaderboard
+   - News feed          : news_posts
+   - Charity applications: public "request form" (handled off-DB at first)
+   - Split donations    : donation_allocations (one donation -> many charities)
+   - Ranking history    : per-charity score over time
+===============================================================================
