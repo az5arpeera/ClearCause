@@ -77,27 +77,23 @@ Why it matters
 - News feed
 - dark and light mode
 
-## Charity discovery prototype
+## Charity discovery prototype - Ali
 
 From the repository root, run:
-
-~~~sh
 cd web
 npm ci
 npm run dev
-~~~
 
 Start from the landing page's cause picker or open /quiz directly. The quiz asks about causes, a preferred state, and whether to favor charities with annual budgets under $1 million. Each answer is optional. Results use fictional sample charities and show the preferences each result matched. Preferences travel in the URL so the results page can reopen the quiz with the same answers.
 
 The matcher in [web/src/lib/matching.ts](web/src/lib/matching.ts) requires at least one cause in common when causes are selected. It gives up to four points for the fraction of selected causes covered, two points for a matching state, and one point for a known budget under $1 million when that preference is selected. The fit percentage divides the points earned by the maximum for the answered questions. With no answers, the catalog is listed alphabetically without scores.
 
-### Scrape charity website metadata
+### Scrape charity website metadata - Ali
 
-Run from the repository root with Python 3 and the standard library. Replace the example URL with one or more public charity pages.
+Run from the repository root.
+Replace the example URL with one or more public charity pages.
 
-~~~sh
 python scripts/scrape_charities.py https://example.org/about > charity-candidates.json
-~~~
 
 The scraper reads organization structured data, falls back to page metadata, and collects links labeled as annual reports, financial statements, or Form 990. Each JSON record includes the fetched source URL and timestamp. Unavailable fields are null. The scraper checks robots.txt, spaces out requests, and fetches only the supplied pages and their redirects. Errors go to stderr and produce a nonzero exit code while preserving successful records on stdout.
 
