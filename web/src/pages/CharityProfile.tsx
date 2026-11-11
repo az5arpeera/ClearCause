@@ -106,15 +106,15 @@ function Masthead() {
         <Logo className="h-14" />
         <nav
           aria-label="Primary"
-          className="order-last -mx-4 h-11 w-[calc(100%+2rem)] border-t border-paper/15 px-4 sm:order-none sm:mx-0 sm:h-full sm:w-auto sm:border-t-0 sm:px-0"
+          className="order-last -mx-4 h-14 w-[calc(100%+2rem)] border-t border-paper/15 px-4 sm:order-none sm:mx-0 sm:h-full sm:w-auto sm:border-t-0 sm:px-0"
         >
-          <ul className="flex h-full items-stretch gap-6 text-sm">
+          <ul className="flex h-full items-center gap-1.5">
             {links.map(([label, href]) => (
-              <li key={label} className="flex">
+              <li key={label}>
                 <a
                   href={href}
                   aria-current={label === "Matches" ? "page" : undefined}
-                  className="flex items-center border-b-2 border-transparent pt-0.5 text-paper/80 no-underline transition-colors hover:text-paper aria-[current=page]:border-paper aria-[current=page]:text-paper"
+                  className="nav-bubble"
                 >
                   {label}
                 </a>

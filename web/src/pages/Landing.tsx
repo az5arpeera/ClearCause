@@ -201,26 +201,26 @@ function Masthead() {
   ]
   return (
     <header className="lg lg-forest lg-text sticky top-0 z-40" data-refract="0.8" data-refract-bezel="10">
-      <div className="mx-auto flex h-16 max-w-[76rem] items-center gap-10 px-4 sm:px-6 lg:px-10">
+      <div className="mx-auto flex h-16 max-w-[76rem] items-center gap-8 px-4 sm:px-6 lg:px-10">
         <Logo />
         <nav aria-label="Primary" className="hidden h-full md:block">
-          <ul className="flex h-full items-center gap-6 text-sm">
+          <ul className="flex h-full items-center gap-1.5">
             {links.map(([label, href]) => (
               <li key={href}>
-                <a href={href} className="text-paper/80 no-underline transition-colors hover:text-paper">
+                <a href={href} className="nav-bubble">
                   {label}
                 </a>
               </li>
             ))}
           </ul>
         </nav>
-        <div className="ml-auto flex items-center gap-5 text-sm">
-          <a href="/partners" className="hidden text-paper/80 no-underline hover:text-paper sm:inline">
+        <div className="ml-auto flex items-center gap-1.5">
+          <a href="/partners" className="nav-bubble hidden sm:inline-flex">
             For nonprofits
           </a>
           <a
             href="#start"
-            className="inline-flex h-9 items-center rounded-[2px] bg-paper px-3.5 font-semibold text-forest-deep no-underline transition-colors hover:bg-forest-soft"
+            className="nav-bubble nav-bubble-primary"
           >
             Find my matches
           </a>

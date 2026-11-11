@@ -145,6 +145,8 @@ typography:
 rounded:
   sm: "1px"
   md: "2px"
+  nav: "10px"
+  glass: "12px"
 spacing:
   gutter-sm: "16px"
   gutter-md: "24px"
@@ -365,7 +367,7 @@ Plain, firm and squared, like a form you sign.
 - **Don't:** run the words together, recolor the mark, or put the logo on paper without a forest-deep field behind it.
 
 ### Navigation
-- **Masthead:** A 56px forest-deep band with the wordmark and primary links in paper at 80% opacity. The current page gets full paper and a 2px paper underline (never the money green). On mobile the links drop to a second 44px row inside the band.
+- **Masthead:** a sticky forest liquid-glass bar with the logo at left. Every link in it is a **nav bubble**: 36px tall, 10px corners, paper text on a 9% paper fill with a soft inner hairline. On hover the fill rises to 17%, and the current page goes to 22% with a brighter ring and semibold text. The page's main action (for example "Find my matches") is the one solid paper bubble with forest-deep text. On mobile the profile's links drop to a second row of bubbles, and the landing page keeps only "Find my matches".
 - **Breadcrumb:** Ink-2 text, with the parent link underlined in hairline color.
 - **On-page contents:** A ruled row of section links. Hover turns them forest and underlined.
 
