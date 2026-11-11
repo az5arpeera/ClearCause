@@ -4,17 +4,6 @@
 
 import { charity, expenses, programs } from "@/data/sample-charity"
 
-export const causes = [
-  { id: "hunger", label: "Hunger", photo: "pantry" },
-  { id: "housing", label: "Housing", photo: "housing" },
-  { id: "kids", label: "Kids and schools", photo: "reading" },
-  { id: "climate", label: "Climate", photo: "climate" },
-  { id: "animals", label: "Animals", photo: "animals" },
-  { id: "health", label: "Health", photo: "health" },
-  { id: "arts", label: "Arts", photo: "arts" },
-  { id: "reuse", label: "Repair and reuse", photo: "tools" },
-] as const
-
 /** Sample platform totals. Placeholder until there is real platform data. */
 export const counters = [
   { value: "$2.4M", label: "given through matches" },
@@ -100,7 +89,7 @@ export interface Org {
   name: string
   kind: string
   place: string
-  budget: string
+  annualBudgetUsd: number
   auditedOn: string
   toPrograms: number
   /** A money figure, audited. */
@@ -120,7 +109,7 @@ export const orgs: Org[] = [
     name: charity.name,
     kind: "Food bank",
     place: charity.place,
-    budget: "$398K a year",
+    annualBudgetUsd: total,
     auditedOn: "Mar 2026",
     toPrograms: Math.round((expenses.programs / total) * 100),
     spent: { amount: programs[0].spending, on: "on weekly grocery distribution" },
@@ -134,7 +123,7 @@ export const orgs: Org[] = [
     name: "Eastgate Tool Library",
     kind: "Repair and reuse",
     place: "Harlow, Ohio",
-    budget: "$142K a year",
+    annualBudgetUsd: 142_000,
     auditedOn: "Jan 2026",
     toPrograms: 81,
     spent: { amount: 38_600, on: "on tools, repairs and Saturday fix-it clinics" },
@@ -147,7 +136,7 @@ export const orgs: Org[] = [
     name: "River Bend Reading Corps",
     kind: "Literacy tutoring",
     place: "Marlow County, Ohio",
-    budget: "$264K a year",
+    annualBudgetUsd: 264_000,
     auditedOn: "Feb 2026",
     toPrograms: 86,
     spent: { amount: 151_200, on: "on trained tutors in six schools" },

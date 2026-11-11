@@ -1,15 +1,9 @@
 import { ArrowLeft } from "lucide-react"
 
 import { Logo } from "@/components/Logo"
-import { causes } from "@/data/sample-landing"
-
-type Kind = "matches" | "partners" | "missing"
+type Kind = "partners" | "missing"
 
 const copy: Record<Kind, { title: string; body: string }> = {
-  matches: {
-    title: "Matching isn't built yet",
-    body: "This is a design prototype. When matching exists, this is where you'd see charities ranked by how well they fit what you picked.",
-  },
   partners: {
     title: "Partner applications aren't open yet",
     body: "This is a design prototype. When applications open, small nonprofits will start here: apply, pass an independent audit, and get listed free.",
@@ -21,13 +15,6 @@ const copy: Record<Kind, { title: string; body: string }> = {
 }
 
 export default function Placeholder({ kind }: { kind: Kind }) {
-  const picked =
-    kind === "matches"
-      ? (new URLSearchParams(window.location.search).get("causes") ?? "")
-          .split(",")
-          .map((id) => causes.find((c) => c.id === id)?.label)
-          .filter(Boolean)
-      : []
   const { title, body } = copy[kind]
 
   return (
@@ -41,12 +28,6 @@ export default function Placeholder({ kind }: { kind: Kind }) {
         <div className="max-w-[40rem] border-t-2 border-forest pt-5">
           <h1 className="text-[2rem] leading-tight font-bold tracking-[-0.02em] text-balance">{title}</h1>
           <p className="mt-3 font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{body}</p>
-          {picked.length > 0 ? (
-            <p className="mt-5 text-[0.9375rem]">
-              <span className="text-ink-2">You picked: </span>
-              <span className="font-semibold">{picked.join(", ")}</span>
-            </p>
-          ) : null}
           <a
             href="/"
             className="mt-8 inline-flex h-11 items-center gap-2 rounded-[2px] bg-forest px-5 text-[0.9375rem] font-semibold text-paper no-underline hover:bg-forest-deep"

@@ -76,3 +76,29 @@ Why it matters
 - Scraper for charities financials
 - News feed
 - dark and light mode
+
+## Charity discovery prototype
+
+From the repository root, run:
+
+~~~sh
+cd web
+npm ci
+npm run dev
+~~~
+
+Start from the landing page's cause picker or open /quiz directly. The quiz asks about causes, a preferred state, and whether to favor charities with annual budgets under $1 million. Each answer is optional. Results use fictional sample charities and show the preferences each result matched. Preferences travel in the URL so the results page can reopen the quiz with the same answers.
+
+The matcher in [web/src/lib/matching.ts](web/src/lib/matching.ts) requires at least one cause in common when causes are selected. It gives up to four points for the fraction of selected causes covered, two points for a matching state, and one point for a known budget under $1 million when that preference is selected. The fit percentage divides the points earned by the maximum for the answered questions. With no answers, the catalog is listed alphabetically without scores.
+
+### Scrape charity website metadata
+
+Run from the repository root with Python 3 and the standard library. Replace the example URL with one or more public charity pages.
+
+~~~sh
+python scripts/scrape_charities.py https://example.org/about > charity-candidates.json
+~~~
+
+The scraper reads organization structured data, falls back to page metadata, and collects links labeled as annual reports, financial statements, or Form 990. Each JSON record includes the fetched source URL and timestamp. Unavailable fields are null. The scraper checks robots.txt, spaces out requests, and fetches only the supplied pages and their redirects. Errors go to stderr and produce a nonzero exit code while preserving successful records on stdout.
+
+Review the candidate's identity, description, location, and source links before publication. To feed a reviewed record into matching, assign cause IDs from [web/src/data/causes.ts](web/src/data/causes.ts), normalize the state name, and supply an annual budget only when it is documented. The matcher accepts those reviewed fields through its MatchableCharity type. The prototype currently reads its catalog from [web/src/data/sample-matches.ts](web/src/data/sample-matches.ts).
