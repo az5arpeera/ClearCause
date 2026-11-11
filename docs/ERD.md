@@ -12,11 +12,6 @@ data records (scraper-fed + vetted), not accounts.
 
 > Renders automatically on GitHub. In VS Code, install the "Markdown Preview
 > Mermaid Support" extension to preview locally.
->
-> A rendered image is also available at [`ERD.png`](./ERD.png) (regenerate with
-> `npx @mermaid-js/mermaid-cli -i erd.mmd -o docs/ERD.png -b white -s 2`).
-
-![ClearCause ERD](./ERD.png)
 
 ```mermaid
 erDiagram
