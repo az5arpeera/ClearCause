@@ -11,6 +11,7 @@ export default function SignIn() {
   const [mode, setMode] = useState<Mode>("signin")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirm, setConfirm] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [checkEmail, setCheckEmail] = useState(false)
@@ -23,8 +24,12 @@ export default function SignIn() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    setBusy(true)
     setError(null)
+    if (mode === "signup" && password !== confirm) {
+      setError("Passwords don't match.")
+      return
+    }
+    setBusy(true)
     const run = mode === "signin" ? signInWithEmail : signUpWithEmail
     const { error } = await run(email, password)
     setBusy(false)
@@ -120,6 +125,22 @@ export default function SignIn() {
                   />
                 </label>
 
+                {mode === "signup" && (
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-[0.8125rem] font-semibold text-ink-2">Confirm password</span>
+                    <input
+                      type="password"
+                      required
+                      minLength={6}
+                      autoComplete="new-password"
+                      value={confirm}
+                      onChange={(e) => setConfirm(e.target.value)}
+                      aria-invalid={confirm.length > 0 && confirm !== password}
+                      className="h-11 rounded-[2px] border border-ink/15 bg-paper px-3 text-[0.9375rem] outline-none focus:border-forest focus:ring-2 focus:ring-forest/20 aria-[invalid=true]:border-red-500"
+                    />
+                  </label>
+                )}
+
                 {error && (
                   <p className="text-[0.875rem] text-red-700" role="alert">
                     {error}
@@ -142,6 +163,7 @@ export default function SignIn() {
                   onClick={() => {
                     setMode(mode === "signin" ? "signup" : "signin")
                     setError(null)
+                    setConfirm("")
                   }}
                   className="font-semibold text-forest underline underline-offset-2 hover:text-forest-deep"
                 >
