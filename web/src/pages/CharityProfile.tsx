@@ -96,8 +96,8 @@ function Masthead() {
     ["Your giving", "/matches"],
   ]
   return (
-    <header className="bg-forest-deep text-paper">
-      <div className="mx-auto flex max-w-[76rem] flex-wrap items-center gap-x-8 px-4 sm:h-14 sm:flex-nowrap sm:px-6 lg:px-10">
+    <header className="sticky top-0 z-40 bg-forest-deep text-paper">
+      <div className="mx-auto flex max-w-none flex-wrap items-center gap-x-8 px-4 sm:h-14 sm:flex-nowrap sm:px-6 lg:px-10">
         <Logo className="h-14" />
         <nav
           aria-label="Primary"

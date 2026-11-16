@@ -194,8 +194,8 @@ function Masthead() {
     ["Partners", "#partners"],
   ]
   return (
-    <header className="bg-forest-deep text-paper">
-      <div className="mx-auto flex h-16 max-w-[76rem] items-center gap-10 px-4 sm:px-6 lg:px-10">
+    <header className="sticky top-0 z-40 bg-forest-deep text-paper">
+      <div className="mx-auto flex h-16 max-w-none items-center gap-10 px-4 sm:px-6 lg:px-10">
         <Logo />
         <nav aria-label="Primary" className="hidden h-full md:block">
           <ul className="flex h-full items-center gap-6 text-sm">
@@ -212,13 +212,13 @@ function Masthead() {
           <a href="/partners" className="hidden text-paper/80 no-underline hover:text-paper sm:inline">
             For nonprofits
           </a>
-          <AuthControl />
           <a
             href="#start"
             className="inline-flex h-9 items-center rounded-[2px] bg-paper px-3.5 font-semibold text-forest-deep no-underline transition-colors hover:bg-forest-soft"
           >
             Find my matches
           </a>
+          <AuthControl />
         </div>
       </div>
     </header>

@@ -58,8 +58,8 @@ export default function SignIn() {
 
   return (
     <div className="flex min-h-svh flex-col bg-paper text-ink">
-      <header className="bg-forest-deep text-paper">
-        <div className="mx-auto flex h-16 max-w-[76rem] items-center px-4 sm:px-6 lg:px-10">
+      <header className="sticky top-0 z-40 bg-forest-deep text-paper">
+        <div className="mx-auto flex h-16 max-w-none items-center px-4 sm:px-6 lg:px-10">
           <Logo />
         </div>
       </header>
