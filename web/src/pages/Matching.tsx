@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import { ArrowRight } from "lucide-react"
 
+import { AuthControl } from "@/components/AuthControl"
 import { Logo } from "@/components/Logo"
 import { causes } from "@/data/causes"
 import { sampleCharities, sampleRegions } from "@/data/sample-matches"
@@ -15,6 +16,7 @@ function MatchingLayout({ title, children }: { title: string; children: ReactNod
       <header className="bg-forest-deep text-paper">
         <div className="mx-auto flex h-16 max-w-[76rem] items-center px-4 sm:px-6 lg:px-10">
           <Logo />
+          <AuthControl className="ml-auto" />
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">

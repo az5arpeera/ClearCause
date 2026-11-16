@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react"
 import { ArrowRight, BadgeCheck, Check, CircleDashed, MapPin, ShieldCheck, Sprout } from "lucide-react"
 
+import { AuthControl } from "@/components/AuthControl"
 import { Logo } from "@/components/Logo"
 import { cn } from "@/lib/utils"
 import { expenses, programs } from "@/data/sample-charity"
@@ -211,6 +212,7 @@ function Masthead() {
           <a href="/partners" className="hidden text-paper/80 no-underline hover:text-paper sm:inline">
             For nonprofits
           </a>
+          <AuthControl />
           <a
             href="#start"
             className="inline-flex h-9 items-center rounded-[2px] bg-paper px-3.5 font-semibold text-forest-deep no-underline transition-colors hover:bg-forest-soft"

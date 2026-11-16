@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent, type ReactNode } from "react"
 import { BadgeCheck, Check, CircleDashed } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { AuthControl } from "@/components/AuthControl"
 import { Logo } from "@/components/Logo"
 import { cn } from "@/lib/utils"
 import {
@@ -116,12 +117,7 @@ function Masthead() {
             ))}
           </ul>
         </nav>
-        <span
-          className="ml-auto grid size-8 place-items-center rounded-full border border-paper/40 text-xs font-semibold"
-          aria-label={`Signed in as ${match.donor}`}
-        >
-          {match.donor[0]}
-        </span>
+        <AuthControl className="ml-auto" />
       </div>
     </header>
   )
