@@ -21,7 +21,9 @@ type CharityRow = {
   location_city: string | null
   location_region: string | null
   charity_causes: { causes: { slug: string } | null }[] | null
-  charity_financials: { fiscal_year: number; total_expenses: number | null }[] | null
+  charity_financials:
+    | { fiscal_year: number; total_expenses: number | null; program_expense_ratio: number | null }[]
+    | null
 }
 
 /** Vetted charities, shaped for the matcher. Anon can read these under RLS. */
@@ -31,7 +33,7 @@ export async function fetchVettedCharities(): Promise<MatchableCharity[]> {
     .select(
       "id, name, description, location_city, location_region, " +
         "charity_causes ( causes ( slug ) ), " +
-        "charity_financials ( fiscal_year, total_expenses )",
+        "charity_financials ( fiscal_year, total_expenses, program_expense_ratio )",
     )
     .eq("vetting_status", "vetted")
   if (error) throw new Error(error.message)
@@ -56,6 +58,10 @@ export async function fetchVettedCharities(): Promise<MatchableCharity[]> {
       place: place || (c.location_region ?? ""),
       region: c.location_region ?? undefined,
       annualBudgetUsd: latest?.total_expenses != null ? Number(latest.total_expenses) : undefined,
+      directPct:
+        latest?.program_expense_ratio != null
+          ? Math.round(Number(latest.program_expense_ratio) * 100)
+          : undefined,
     } satisfies MatchableCharity
   })
 }
@@ -97,4 +103,55 @@ export async function saveCausePreferences(
   if (rows.length === 0) return
   const { error: insertError } = await supabase.from("donor_cause_preferences").insert(rows)
   if (insertError) throw new Error(insertError.message)
+}
+
+/** The donor's profile preferences (one row per donor in donor_preferences). */
+export type DonorPreferences = {
+  giving_budget: number | null
+  frequency: string | null
+  location_scope: string | null
+  direct_pct_min: number | null
+}
+
+/** Load the signed-in donor's saved profile preferences, or null if none yet. */
+export async function loadDonorPreferences(profileId: string): Promise<DonorPreferences | null> {
+  const { data, error } = await supabase
+    .from("donor_preferences")
+    .select("giving_budget, frequency, location_scope, direct_pct_min")
+    .eq("profile_id", profileId)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!data) return null
+
+  const row = data as {
+    giving_budget: number | string | null
+    frequency: string | null
+    location_scope: string | null
+    direct_pct_min: number | null
+  }
+  return {
+    giving_budget: row.giving_budget != null ? Number(row.giving_budget) : null,
+    frequency: row.frequency ?? null,
+    location_scope: row.location_scope ?? null,
+    direct_pct_min: row.direct_pct_min != null ? Number(row.direct_pct_min) : null,
+  }
+}
+
+/** Create or replace the donor's profile preferences (upsert on profile_id). */
+export async function saveDonorPreferences(
+  profileId: string,
+  prefs: DonorPreferences,
+): Promise<void> {
+  const { error } = await supabase.from("donor_preferences").upsert(
+    {
+      profile_id: profileId,
+      giving_budget: prefs.giving_budget,
+      frequency: prefs.frequency,
+      location_scope: prefs.location_scope,
+      direct_pct_min: prefs.direct_pct_min,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "profile_id" },
+  )
+  if (error) throw new Error(error.message)
 }
