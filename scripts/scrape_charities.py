@@ -2,6 +2,7 @@
 
 import argparse
 from datetime import datetime, timezone
+from heapq import heappop, heappush
 from html.parser import HTMLParser
 import json
 import re
@@ -21,13 +22,15 @@ else:
 AGENT = "ClearCauseBot"
 MAX_BYTES = 2 * 1024 * 1024
 MAX_PDF_BYTES = 20 * 1024 * 1024
-MAX_REPORT_PAGES = 3
+MAX_REPORT_PAGES = 8
+MAX_REPORT_DEPTH = 3
 MAX_STATEMENTS = 5
 REDIRECTS = {301, 302, 303, 307, 308}
 ORGANIZATION_TYPES = {"Organization", "NGO", "NonprofitOrganization", "CharitableOrganization"}
 FINANCIAL_LINK = re.compile(
     r"\b(?:annual[\s_-]+reports?|(?:irs[\s_-]+)?form[\s_-]+990(?:[\s_-]?(?:ez|pf))?"
-    r"|(?:audited[\s_-]+)?financial[\s_-]+statements?|audited[\s_-]+financials)\b",
+    r"|financials|financial[\s_-]+(?:statements?|reports?|information|results)"
+    r"|audited[\s_-]+financials?|audit[\s_-]+reports?)\b",
     re.IGNORECASE,
 )
 REPORTS_PAGE = re.compile(r"\breports?[\s_&-]+(?:and[\s_-]+)?financials?\b", re.IGNORECASE)
@@ -35,6 +38,7 @@ STATEMENT_LINK = re.compile(
     r"\b(?:financial[\s_-]+statements?|audited[\s_-]+financials?|audit(?:ed)?[\s_-]+reports?)\b",
     re.IGNORECASE,
 )
+ABOUT_LINK = re.compile(r"^about(?:\s+(?:us|the\s+organization|our\s+organization))?$", re.I)
 
 
 def clean_text(value):
@@ -45,7 +49,25 @@ def web_url(value):
     parts = urlsplit(value)
     if parts.scheme not in {"http", "https"} or not parts.hostname or parts.username is not None:
         raise ValueError("Expected an HTTP(S) URL without credentials")
-    return urlunsplit(parts._replace(path=parts.path or "/", fragment=""))
+    query = "&".join(
+        part for part in parts.query.split("&")
+        if not unquote(part.partition("=")[0]).lower().startswith("utm_")
+        and unquote(part.partition("=")[0]).lower() not in {"sc_icid", "msockid", "fbclid", "gclid"}
+    )
+    return urlunsplit(parts._replace(path=parts.path or "/", query=query, fragment=""))
+
+
+def financial_link(url, label):
+    text = f"{label or ''} {unquote(urlsplit(url).path)}"
+    return bool(FINANCIAL_LINK.search(text) or REPORTS_PAGE.search(text) or STATEMENT_LINK.search(text))
+
+
+def about_link(url, label, source_url):
+    parts = urlsplit(url)
+    path = parts.path.strip("/").removesuffix(".html")
+    same_host = parts.hostname.removeprefix("www.") == urlsplit(source_url).hostname.removeprefix("www.")
+    return same_host and (ABOUT_LINK.fullmatch(label or "") or
+                          ("/" not in path and re.fullmatch(r"about(?:[-_].+)?", path, re.I)))
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -189,8 +211,7 @@ def extract_charity(html, source_url):
             url = web_url(urljoin(source_url, href))
         except ValueError:
             continue
-        link_text = f"{label} {unquote(urlsplit(url).path)}"
-        if FINANCIAL_LINK.search(link_text) or REPORTS_PAGE.search(link_text) or STATEMENT_LINK.search(link_text):
+        if financial_link(url, label):
             financial_links.setdefault(url, {"url": url, "label": label or None})
 
     return {
@@ -209,38 +230,66 @@ def is_pdf_url(url):
     return unquote(urlsplit(url).path).lower().endswith(".pdf")
 
 
-def discover_statements(fetcher, record):
+def statement_year(entry):
+    url, (label, _) = entry
+    years = re.findall(r"(?:19|20)\d{2}", label or "")
+    if not years:
+        years = re.findall(r"(?:19|20)\d{2}", unquote(urlsplit(url).path).rsplit("/", 1)[-1])
+    return max(map(int, years), default=0)
+
+
+def discover_statements(fetcher, record, source_page=None):
     statements = {}
-    reports_pages = {}
-
-    for link in record["financialLinks"]:
-        url, label = link["url"], link["label"]
-        if is_pdf_url(url):
-            if STATEMENT_LINK.search(f"{label or ''} {unquote(urlsplit(url).path)}"):
-                statements.setdefault(url, (label, None))
-        elif url != record["sourceUrl"]:
-            reports_pages.setdefault(url, label)
-
+    financial_links = {link["url"]: link for link in record["financialLinks"]}
+    pending = []
+    visited = {record["sourceUrl"]}
     errors = []
-    for url, label in list(reports_pages.items())[:MAX_REPORT_PAGES]:
+
+    def enqueue(url, label, depth):
+        is_financial = financial_link(url, label)
+        if is_financial:
+            financial_links.setdefault(url, {"url": url, "label": label or None})
+        text = f"{label or ''} {unquote(urlsplit(url).path)}"
+        if is_pdf_url(url):
+            if STATEMENT_LINK.search(text):
+                statements.setdefault(url, (label, None))
+        elif url not in visited and depth <= MAX_REPORT_DEPTH:
+            if is_financial or about_link(url, label, record["sourceUrl"]):
+                heappush(pending, (0 if is_financial else 1, depth, url, label or ""))
+                visited.add(url)
+
+    for link in list(financial_links.values()):
+        enqueue(link["url"], link["label"], 1)
+    if source_page is not None:
+        for href, label in source_page.links:
+            try:
+                enqueue(web_url(urljoin(record["sourceUrl"], href)), label, 1)
+            except ValueError:
+                continue
+
+    pages_fetched = 0
+    while pending and pages_fetched < MAX_REPORT_PAGES:
+        priority, depth, url, label = heappop(pending)
+        if priority > 0 and statements:
+            break
+        pages_fetched += 1
         try:
             final_url, headers, body = fetcher.fetch(url, max_bytes=MAX_PDF_BYTES)
+            visited.add(final_url)
             if body.startswith(b"%PDF-"):
-                if STATEMENT_LINK.search(f"{label or ''} {unquote(urlsplit(final_url).path)}"):
-                    statements[final_url] = (label, body)
+                statements[final_url] = (label, body)
                 continue
             page = parse_html(decode_html(headers, body))
             for href, label in page.links:
                 try:
-                    link_url = web_url(urljoin(final_url, href))
+                    enqueue(web_url(urljoin(final_url, href)), label, depth + 1)
                 except ValueError:
                     continue
-                if STATEMENT_LINK.search(f"{label} {unquote(urlsplit(link_url).path)}"):
-                    if link_url not in {final_url, record["sourceUrl"]} and link_url not in reports_pages:
-                        statements.setdefault(link_url, (label or None, None))
         except (ValueError, LookupError, OSError, RecursionError) as error:
             errors.append({"url": url, "error": str(error)})
-    return statements, errors
+    record["financialLinks"] = list(financial_links.values())
+    # Prioritize recent reports even when a website lists its archive oldest first.
+    return dict(sorted(statements.items(), key=statement_year, reverse=True)), errors
 
 
 def decode_html(headers, body):
@@ -251,8 +300,8 @@ def decode_html(headers, body):
     return body.decode(headers.get_content_charset() or "utf-8-sig", errors="replace")
 
 
-def collect_financial_statements(fetcher, record):
-    statements, errors = discover_statements(fetcher, record)
+def collect_financial_statements(fetcher, record, source_page=None):
+    statements, errors = discover_statements(fetcher, record, source_page)
     results = {}
     for url, (label, body) in list(statements.items())[:MAX_STATEMENTS]:
         final_url = url
@@ -263,13 +312,16 @@ def collect_financial_statements(fetcher, record):
                 continue
             if not body.startswith(b"%PDF-"):
                 raise ValueError("Expected a PDF response")
-            highlights = read_highlights(body)
+            warnings = []
+            highlights = read_highlights(body, warnings=warnings)
             results[final_url] = {
                 "url": final_url,
                 "label": label,
                 "status": "extracted" if highlights else "noSupportedFigures",
                 "highlights": highlights,
             }
+            if warnings:
+                results[final_url]["warnings"] = warnings
         except (ValueError, OSError, RecursionError) as error:
             errors.append({"url": final_url, "error": str(error)})
     record["financialStatements"] = list(results.values())
@@ -293,8 +345,9 @@ def main():
             requested.add(url)
             source_url, headers, body = fetcher.fetch(url)
             if source_url not in records:
-                record = extract_charity(decode_html(headers, body), source_url)
-                collect_financial_statements(fetcher, record)
+                html = decode_html(headers, body)
+                record = extract_charity(html, source_url)
+                collect_financial_statements(fetcher, record, parse_html(html))
                 records[source_url] = record
         except (ValueError, LookupError, OSError, RecursionError) as error:
             had_errors = True
