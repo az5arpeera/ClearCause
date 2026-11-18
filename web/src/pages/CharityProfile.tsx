@@ -9,6 +9,7 @@ import { NORTHSIDE_ID, northsideExtras, presetGifts } from "@/data/sample-charit
 import { fetchCharityDetail, type CharityDetail, type CharityFinancials } from "@/lib/db"
 import { useLiquidGlass } from "@/lib/liquid-glass"
 import { rankCharities, readPreferences, smallBudgetUsd } from "@/lib/matching"
+import { preferencesQuery, readLocalPreferences } from "@/lib/preferences"
 import { compactUsd, count, exact, spendingParts, splitAmount, whole, type SpendPart } from "@/lib/money"
 import { cn } from "@/lib/utils"
 
@@ -75,7 +76,7 @@ function StatePage({ title, children, busy }: { title: string; children: ReactNo
         <h1 className="text-[2rem] leading-tight font-bold tracking-[-0.02em]">{title}</h1>
         <p className="mt-3 font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{children}</p>
         {!busy ? (
-          <a href="/matches" className="mt-8 inline-flex h-11 items-center gap-2 rounded-[2px] bg-forest px-5 text-[0.9375rem] font-semibold text-paper no-underline hover:bg-forest-deep">
+          <a href="/explore" className="mt-8 inline-flex h-11 items-center gap-2 rounded-[2px] bg-forest px-5 text-[0.9375rem] font-semibold text-paper no-underline hover:bg-forest-deep">
             Browse charities
             <ArrowRight className="size-4" aria-hidden />
           </a>
@@ -85,22 +86,30 @@ function StatePage({ title, children, busy }: { title: string; children: ReactNo
   )
 }
 
+const prefKeys = ["causes", "region", "size", "direct"]
+
 function Profile({ charity }: { charity: CharityDetail }) {
   const latest = charity.financials[0]
   const parts = latest ? spendingParts(latest) : null
   const extras = charity.id === NORTHSIDE_ID ? northsideExtras : null
   const sample = isSampleCharity(charity)
-  const params = useMemo(() => new URLSearchParams(window.location.search), [])
-  const hasPrefs = ["causes", "region", "size", "direct"].some((k) => params.has(k))
+  // Answers in the link win; otherwise use the donor's saved quiz answers.
+  const params = useMemo(() => {
+    const fromUrl = new URLSearchParams(window.location.search)
+    if (prefKeys.some((k) => fromUrl.has(k))) return fromUrl
+    const saved = readLocalPreferences()
+    return saved ? preferencesQuery(saved) : fromUrl
+  }, [])
+  const hasPrefs = prefKeys.some((k) => params.has(k))
 
   return (
     <>
       {sample ? <SampleNotice name={charity.name} /> : null}
       <main id="main" className="mx-auto max-w-[76rem] px-4 sm:px-6 lg:px-10">
-        <ProfileHeader charity={charity} hasPrefs={hasPrefs} params={params} hasPrograms={Boolean(extras)} />
+        <ProfileHeader charity={charity} hasPrefs={hasPrefs} hasPrograms={Boolean(extras)} />
 
         <div className="grid gap-x-12 lg:grid-cols-[minmax(0,1fr)_21rem] xl:gap-x-16">
-          {latest && parts ? <Lead charity={charity} year={latest} parts={parts} /> : <NoFigures charity={charity} />}
+          {latest && parts ? <Lead charity={charity} year={latest} parts={parts} /> : <NoFigures charity={charity} year={latest} />}
           <aside id="give" className="mt-10 scroll-mt-24 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-6 lg:row-start-1 lg:mt-0 lg:self-start">
             <GiftComposer charity={charity} year={latest} parts={parts} sample={sample} />
           </aside>
@@ -132,12 +141,10 @@ function SampleNotice({ name }: { name: string }) {
 function ProfileHeader({
   charity,
   hasPrefs,
-  params,
   hasPrograms,
 }: {
   charity: CharityDetail
   hasPrefs: boolean
-  params: URLSearchParams
   hasPrograms: boolean
 }) {
   const contents: [string, string][] = [
@@ -146,7 +153,7 @@ function ProfileHeader({
     ["Where the figures come from", "#sources"],
     ...(hasPrograms ? ([["Programs", "#programs"]] as [string, string][]) : []),
   ]
-  const back = hasPrefs ? `/matches?${params.toString()}` : "/matches"
+  const back = hasPrefs ? "/for-you" : "/explore"
   const meta = [
     charity.causes.map((c) => causeLabel[c]).join(", "),
     charity.place,
@@ -157,7 +164,7 @@ function ProfileHeader({
     <header className="pt-6 pb-8 md:pt-8 md:pb-10 lg:pt-10">
       <nav aria-label="Breadcrumb" className="text-sm text-ink-2">
         <a href={back} className="underline decoration-rule hover:decoration-ink-2">
-          {hasPrefs ? "Your matches" : "All charities"}
+          {hasPrefs ? "For you" : "Explore"}
         </a>
         <span aria-hidden className="px-2 text-ink-3">
           /
@@ -284,7 +291,45 @@ function Lead({ charity, year, parts }: { charity: CharityDetail; year: CharityF
   )
 }
 
-function NoFigures({ charity }: { charity: CharityDetail }) {
+function NoFigures({ charity, year }: { charity: CharityDetail; year?: CharityFinancials }) {
+  if (year && (year.totalExpenses != null || year.totalRevenue != null)) {
+    // A filing with totals only (IRS 990 extracts): show what it does say.
+    return (
+      <section aria-labelledby="lead-heading" className="lg:col-start-1">
+        <div className="border-t-2 border-forest pt-4">
+          <h2 id="lead-heading" className="text-[1.625rem] leading-tight font-semibold tracking-[-0.02em]">
+            {charity.name} in {year.fiscalYear}
+          </h2>
+          <dl data-money className="mt-5 grid max-w-[36rem] grid-cols-2 gap-x-8 border-y border-ink">
+            {year.totalRevenue != null ? (
+              <div className="py-4">
+                <dt className="text-sm text-ink-2">Took in</dt>
+                <dd className="figures mt-1 text-[2rem] leading-none font-bold">{whole.format(year.totalRevenue)}</dd>
+              </div>
+            ) : null}
+            {year.totalExpenses != null ? (
+              <div className="py-4">
+                <dt className="text-sm text-ink-2">Spent</dt>
+                <dd className="figures mt-1 text-[2rem] leading-none font-bold">{whole.format(year.totalExpenses)}</dd>
+              </div>
+            ) : null}
+          </dl>
+          <p className="mt-4 max-w-[62ch] font-serif text-[1.0625rem] leading-[1.6] text-ink-2">
+            The filing we have reports totals only, not how spending split between programs, management and fundraising.
+            Until we read the full return, {charity.name} ranks with a neutral efficiency score.
+          </p>
+          {year.sourceUrl ? (
+            <p className="mt-3 text-[0.8125rem] text-ink-3">
+              Source:{" "}
+              <a href={year.sourceUrl} className="underline" target="_blank" rel="noreferrer">
+                {sourceLabel(year.sourceUrl)}
+              </a>
+            </p>
+          ) : null}
+        </div>
+      </section>
+    )
+  }
   return (
     <section aria-labelledby="lead-heading" className="lg:col-start-1">
       <div className="border-t-2 border-forest pt-4">
@@ -753,7 +798,7 @@ function WhyMatched({ charity, params, hasPrefs }: { charity: CharityDetail; par
         <p className="mt-4 text-sm font-medium text-forest">{result.reasons.join(" · ")}</p>
       ) : null}
       <p className="mt-4 text-sm">
-        <a href={`/quiz?${params.toString()}`} className="font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
+        <a href="/quiz" className="font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
           Edit your giving preferences
         </a>
       </p>
@@ -853,6 +898,7 @@ function Sources({ charity, sample }: { charity: CharityDetail; sample: boolean 
 function sourceLabel(url: string) {
   try {
     const u = new URL(url)
+    if (u.hostname.endsWith("propublica.org")) return "IRS Form 990 via ProPublica Nonprofit Explorer"
     const file = decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() ?? u.hostname)
     const page = u.hash.match(/page=(\d+)/)?.[1]
     return `${file}${page ? `, page ${page}` : ""}`

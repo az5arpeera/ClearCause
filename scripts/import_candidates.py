@@ -51,8 +51,11 @@ def read_candidates(path):
     return data
 
 
-def charity_id(source_url):
-    """A stable id per source page, so re-importing updates instead of duplicating."""
+def charity_id(source_url, ein=None):
+    """A stable id per charity (its EIN when known, else its source page), so
+    re-importing updates instead of duplicating."""
+    if ein:
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, f"urn:ein:{re.sub(r'[^0-9]', '', ein)}"))
     return str(uuid.uuid5(uuid.NAMESPACE_URL, source_url))
 
 
@@ -141,26 +144,40 @@ def build_sql(records, today=None):
         if not name or not source_url:
             print(f"Skipping a record without a name or source URL: {record!r:.80}", file=sys.stderr)
             continue
-        cid = charity_id(source_url)
+        ein = record.get("ein")
+        cid = charity_id(source_url, ein)
+        # Scraper records come from the charity's own site; directory records
+        # (ProPublica) don't carry a website, so leave it for the reviewer.
+        website = record.get("websiteUrl") or (None if ein else site_root(source_url))
         imported += 1
         lines += [
-            f"-- {name} ({source_url})",
+            f"-- {name} ({source_url})" + (f" via {record['sourceName']}" if record.get("sourceName") else ""),
             "insert into public.charities",
-            "  (id, name, description, website_url, location_city, location_region, country, vetting_status)",
+            "  (id, name, ein, description, website_url, location_city, location_region, country, vetting_status)",
             "values",
-            f"  ({sql_text(cid)}, {sql_text(name)}, {sql_text(record.get('description'))}, "
-            f"{sql_text(site_root(source_url))},",
+            f"  ({sql_text(cid)}, {sql_text(name)}, {sql_text(ein)}, {sql_text(record.get('description'))}, "
+            f"{sql_text(website)},",
             f"   {sql_text(record.get('city'))}, {sql_text(record.get('region'))}, {sql_text(record.get('country'))}, 'pending')",
             "on conflict (id) do update set",
             "  name = excluded.name,",
+            "  ein = coalesce(excluded.ein, public.charities.ein),"
             "  description = coalesce(excluded.description, public.charities.description),",
-            "  website_url = excluded.website_url,",
+            "  website_url = coalesce(excluded.website_url, public.charities.website_url),",
             "  location_city = coalesce(excluded.location_city, public.charities.location_city),",
             "  location_region = coalesce(excluded.location_region, public.charities.location_region),",
             "  country = coalesce(excluded.country, public.charities.country),",
             "  updated_at = now();",
             "",
         ]
+        causes = [c for c in record.get("causes") or [] if re.fullmatch(r"[a-z_]+", str(c))]
+        if causes:
+            slugs = ", ".join(sql_text(c) for c in causes)
+            lines += [
+                "insert into public.charity_causes (charity_id, cause_id)",
+                f"select {sql_text(cid)}, id from public.causes where slug in ({slugs})",
+                "on conflict do nothing;",
+                "",
+            ]
         for row in fiscal_years(record):
             values = [sql_number(row["columns"].get(c)) for c in COLUMNS]
             ratio = format(row["ratio"], "f") if row["ratio"] is not None else "null"

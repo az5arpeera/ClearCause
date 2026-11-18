@@ -18,7 +18,7 @@ export default function SignIn() {
 
   // Already signed in → send them to their matches.
   if (user) {
-    window.location.replace("/matches")
+    window.location.replace("/for-you")
     return null
   }
 
@@ -42,7 +42,7 @@ export default function SignIn() {
       setCheckEmail(true)
       return
     }
-    window.location.assign("/matches")
+    window.location.assign("/for-you")
   }
 
   async function onGoogle() {

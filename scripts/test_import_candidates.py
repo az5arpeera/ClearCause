@@ -64,6 +64,27 @@ class ImportCandidatesTest(unittest.TestCase):
         self.assertIn("on conflict (charity_id, fiscal_year) do update", sql)
         self.assertIn("'https://harborlight.example.org/'", sql)  # website is the site root
 
+    def test_directory_records_use_ein_causes_and_no_guessed_website(self):
+        record = {
+            "name": "Dayton Food Pantry", "ein": "31-1234567", "causes": ["hunger"], "region": "OH",
+            "sourceUrl": "https://projects.propublica.org/nonprofits/organizations/311234567",
+            "sourceName": "ProPublica Nonprofit Explorer (IRS Form 990 data)",
+            "financialStatements": [{"url": "https://projects.propublica.org/nonprofits/download-filing?path=x.pdf", "highlights": [
+                {"metric": "totalRevenue", "amount": 400000, "fiscalYear": 2023, "page": None},
+                {"metric": "totalExpenses", "amount": 380000, "fiscalYear": 2023, "page": None},
+            ]}],
+        }
+        sql, _ = build_sql([record], today=date(2026, 11, 18))
+        self.assertIn(charity_id(record["sourceUrl"], "31-1234567"), sql)
+        self.assertEqual(charity_id("anything", "31-1234567"), charity_id("other", "311234567"))
+        self.assertIn("'31-1234567'", sql)
+        self.assertIn("where slug in ('hunger')", sql)
+        self.assertNotIn("'https://projects.propublica.org/'", sql)  # no guessed website
+        self.assertIn("via ProPublica Nonprofit Explorer", sql)
+        [row] = fiscal_years(record)
+        self.assertIsNone(row["ratio"])  # no program split in 990 extracts
+        self.assertEqual(row["source"], "https://projects.propublica.org/nonprofits/download-filing?path=x.pdf")
+
     def test_ids_are_stable_per_source_page(self):
         self.assertEqual(charity_id("https://a.example.org/"), charity_id("https://a.example.org/"))
         self.assertNotEqual(charity_id("https://a.example.org/"), charity_id("https://b.example.org/"))

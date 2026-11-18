@@ -131,3 +131,21 @@ This writes the next file in `supabase/migrations/`. Each charity is added as `p
 Before publishing, a reviewer checks each figure against its cited page (OCR figures especially), tags causes in `charity_causes` using the slugs in [web/src/data/causes.ts](web/src/data/causes.ts), and sets `vetting_status = 'vetted'`. Then apply it with `supabase db push`. The charity then appears in matches and gets a profile at `/charity/<id>`, with every figure linked to its source page.
 
 Run the importer checks with `python -B -m unittest scripts.test_import_candidates`.
+
+### Finding real charities via ProPublica
+
+`scripts/discover_propublica.py` searches ProPublica's Nonprofit Explorer API (IRS Form 990 data) for small charities in each Clear Cause cause, by state, and writes records in the scraper's format, with an EIN and cause tags:
+
+```powershell
+python scripts/discover_propublica.py --states OH MI PA --per-cause 2 --out propublica.json
+python scripts/import_candidates.py propublica.json
+```
+
+These filings give revenue and total expenses only, not the program/admin/fundraising split, so profiles show the totals and say the split isn't broken out yet; ranking uses a neutral efficiency score. ProPublica's terms require citing it wherever its data appears: profiles label these figures "IRS Form 990 via ProPublica Nonprofit Explorer" and link the filing.
+
+## Pages
+
+- `/explore`: every vetted charity, with a filter sidebar (search, causes, state, budget, share to programs, transparency, partners) and a donut chart; click a slice to filter. Filters live in the URL.
+- `/quiz`: one-time onboarding. Answers are saved in the browser (and to the account when signed in; a guest's answers move to their account on sign-up), then it goes to For You. Visiting again edits them.
+- `/for-you`: every charity ranked by `suggestCharities` in `web/src/lib/matching.ts`. Nothing is filtered out: charities sharing a chosen cause come first, the rest under "More to explore".
+- `/charity/<id>`: the profile. `/about` and `/contact` are placeholders for now.

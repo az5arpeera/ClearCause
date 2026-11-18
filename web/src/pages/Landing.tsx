@@ -9,7 +9,7 @@ import { causes as causeList } from "@/data/causes"
 import { NORTHSIDE_ID, northsideExtras } from "@/data/sample-charity"
 import { fetchVettedCharityDetails, type CharityDetail } from "@/lib/db"
 import { compactUsd, spendingParts, type SpendPart } from "@/lib/money"
-import { SiteHeader, type NavLink } from "@/components/SiteHeader"
+import { SiteHeader } from "@/components/SiteHeader"
 import {
   auditChecks,
   auditGaps,
@@ -192,7 +192,7 @@ export default function Landing() {
       >
         Skip to content
       </a>
-      <SiteHeader links={landingLinks} primary={{ label: "Find my matches", href: "#start" }} mobileRow={false} />
+      <SiteHeader />
       <main id="main">
         <Hero live={live} />
         <WhereTheMoneyGoes live={live} />
@@ -209,13 +209,6 @@ export default function Landing() {
 }
 
 const HIDE_DONATE_WHILE = ["#start", "#next"]
-
-const landingLinks: NavLink[] = [
-  { label: "How matching works", href: "#matching" },
-  { label: "Where money goes", href: "#money" },
-  { label: "Partners", href: "#partners" },
-  { label: "Browse charities", href: "/matches" },
-]
 
 /* ------------------------------------------------------------------- hero */
 
@@ -952,7 +945,7 @@ function SmallNonprofits({ live }: { live: Live }) {
         </div>
       ) : null}
       <p className="mt-10 text-sm">
-        <a href="/matches" className="inline-flex items-center gap-1 font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
+        <a href="/explore" className="inline-flex items-center gap-1 font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
           Browse every charity
           <ArrowRight className="size-3.5" aria-hidden />
         </a>

@@ -1,15 +1,17 @@
 import { AuthControl } from "@/components/AuthControl"
 import { Logo } from "@/components/Logo"
 import { useLiquidGlass } from "@/lib/liquid-glass"
+import { hasCompletedQuiz } from "@/lib/preferences"
 import { cn } from "@/lib/utils"
 
 export type NavLink = { label: string; href: string }
 
-/** The app's own pages share these links; the landing page passes section anchors instead. */
+/** Every page shares these links. */
 const appLinks: NavLink[] = [
-  { label: "Browse charities", href: "/matches" },
-  { label: "Take the quiz", href: "/quiz" },
-  { label: "For nonprofits", href: "/partners" },
+  { label: "Explore", href: "/explore" },
+  { label: "For You", href: "/for-you" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ]
 
 /**
@@ -19,7 +21,7 @@ const appLinks: NavLink[] = [
  */
 export function SiteHeader({
   links = appLinks,
-  primary = { label: "Find my matches", href: "/quiz" },
+  primary,
   mobileRow = true,
 }: {
   links?: NavLink[]
@@ -27,6 +29,8 @@ export function SiteHeader({
   mobileRow?: boolean
 }) {
   useLiquidGlass()
+  // Until the donor has taken the one-time quiz, it's the page's main action.
+  const main = primary !== undefined ? primary : hasCompletedQuiz() ? null : { label: "Take the quiz", href: "/quiz" }
   const path = typeof window === "undefined" ? "" : window.location.pathname.replace(/\/+$/, "") || "/"
   const isCurrent = (href: string) => !href.startsWith("#") && href === path
 
@@ -53,9 +57,9 @@ export function SiteHeader({
           </ul>
         </nav>
         <div className="ml-auto flex items-center gap-1.5">
-          {primary && !isCurrent(primary.href) ? (
-            <a href={primary.href} className="nav-bubble nav-bubble-primary hidden sm:inline-flex">
-              {primary.label}
+          {main && !isCurrent(main.href) ? (
+            <a href={main.href} className="nav-bubble nav-bubble-primary hidden sm:inline-flex">
+              {main.label}
             </a>
           ) : null}
           <AuthControl />

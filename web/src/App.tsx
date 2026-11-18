@@ -3,7 +3,9 @@ import { useEffect } from 'react'
 import CharityProfile from '@/pages/CharityProfile'
 import { NORTHSIDE_ID } from '@/data/sample-charity'
 import Landing from '@/pages/Landing'
-import Matching from '@/pages/Matching'
+import Explore from '@/pages/Explore'
+import ForYou from '@/pages/ForYou'
+import Quiz, { LegacyMatches } from '@/pages/Matching'
 import Placeholder from '@/pages/Placeholder'
 import SignIn from '@/pages/SignIn'
 
@@ -12,8 +14,12 @@ function App() {
 
   const routes = new Map([
     ['/', { title: 'Clear Cause · Give to the causes you\'d actually choose', page: <Landing /> }],
-    ['/quiz', { title: 'Giving preferences · Clear Cause', page: <Matching mode="quiz" /> }],
-    ['/matches', { title: 'Your matches · Clear Cause', page: <Matching mode="results" /> }],
+    ['/explore', { title: 'Explore charities · Clear Cause', page: <Explore /> }],
+    ['/for-you', { title: 'For you · Clear Cause', page: <ForYou /> }],
+    ['/quiz', { title: 'Giving preferences · Clear Cause', page: <Quiz /> }],
+    ['/matches', { title: 'For you · Clear Cause', page: <LegacyMatches /> }],
+    ['/about', { title: 'About · Clear Cause', page: <Placeholder kind="about" /> }],
+    ['/contact', { title: 'Contact · Clear Cause', page: <Placeholder kind="contact" /> }],
     ['/signin', { title: 'Sign in · Clear Cause', page: <SignIn /> }],
     ['/partners', { title: 'Become a partner · Clear Cause', page: <Placeholder kind="partners" /> }],
   ])

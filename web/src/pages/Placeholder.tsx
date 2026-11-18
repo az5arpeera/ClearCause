@@ -1,12 +1,20 @@
 import { ArrowLeft } from "lucide-react"
 
 import { SiteHeader } from "@/components/SiteHeader"
-type Kind = "partners" | "missing"
+type Kind = "partners" | "missing" | "about" | "contact"
 
 const copy: Record<Kind, { title: string; body: string }> = {
   partners: {
     title: "Partner applications aren't open yet",
     body: "This is a design prototype. When applications open, small nonprofits will start here: apply, pass an independent audit, and get listed free.",
+  },
+  about: {
+    title: "About Clear Cause",
+    body: "Clear Cause shows where each dollar goes before you give it, using charities' own statements and IRS filings, with every figure cited. A fuller About page is on the way.",
+  },
+  contact: {
+    title: "Contact us",
+    body: "A contact form is coming soon. Until then, questions about a charity's figures are best answered by the sources linked on its profile.",
   },
   missing: {
     title: "There's nothing at this address",
