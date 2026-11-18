@@ -39,7 +39,7 @@ export function AuthControl({ className }: { className?: string }) {
     return (
       <a
         href="/signin"
-        className={cn("text-sm font-semibold text-paper/80 no-underline hover:text-paper", className)}
+        className={cn("nav-bubble", className)}
       >
         Sign in
       </a>

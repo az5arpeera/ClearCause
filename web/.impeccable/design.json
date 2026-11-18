@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-05T00:00:00Z",
+  "generatedAt": "2026-11-11T00:00:00Z",
   "title": "Design System: Clear Cause",
   "extensions": {
     "colorMeta": {
@@ -185,7 +185,18 @@
         "purpose": "An organization's name in a spotlight entry."
       }
     },
-    "shadows": [],
+    "shadows": [
+      {
+        "name": "glass-forest",
+        "value": "inset 0 0.5px 0 rgba(255,255,255,0.34), inset 0 0 0 0.5px rgba(255,255,255,0.1), 0 10px 30px oklch(0.255 0.055 258 / 0.18)",
+        "purpose": "Forest liquid glass: nav bar and floating Donate."
+      },
+      {
+        "name": "glass-paper",
+        "value": "inset 0 0.5px 0 rgba(255,255,255,0.9), inset 0 0 0 0.5px rgba(255,255,255,0.4), 0 6px 18px oklch(0.255 0.055 258 / 0.12)",
+        "purpose": "Paper liquid glass: dashboard filter chips."
+      }
+    ],
     "motion": [
       {
         "name": "money-sweep",
@@ -201,6 +212,11 @@
         "name": "trail-draw",
         "value": "transform: scaleY(var(--p)) from the top, driven by scroll to a tip at 78% of the viewport",
         "purpose": "The money trail draws downward as the reader scrolls. Fully drawn by default and under reduced motion."
+      },
+      {
+        "name": "donate-rise",
+        "value": "opacity + translate 16px, 320ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "The floating Donate button rises in once its page's own giving form is off screen. No animated blur; instant under reduced motion."
       }
     ],
     "breakpoints": [
@@ -223,6 +239,20 @@
     ]
   },
   "components": [
+    {
+      "name": "Glass Donate Button",
+      "kind": "button",
+      "description": "Floating forest liquid-glass capsule, bottom-right; hides while the page's own giving form is on screen.",
+      "html": "<div class=\"ds-glass-stage\"><a class=\"ds-lg ds-lg-forest\" style=\"display:inline-flex;align-items:center;gap:8px;height:56px;padding:0 20px 0 24px;border-radius:12px;text-decoration:none;font-size:1rem\">Donate <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\"><path d=\"M5 12h14M13 6l6 6-6 6\"/></svg></a></div>",
+      "css": ".ds-glass-stage { padding: 20px; background: oklch(0.88 0.06 190); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; } .ds-lg { position: relative; isolation: isolate; -webkit-backdrop-filter: saturate(170%) blur(22px); backdrop-filter: saturate(170%) blur(22px); font-family: 'Libre Franklin Variable', sans-serif; font-weight: 600; border: 0; cursor: pointer; transition: filter 200ms ease-out, scale 160ms ease-out; } .ds-lg:active { scale: 0.97; } .ds-lg:focus-visible { outline: 2px solid oklch(0.375 0.078 157); outline-offset: 2px; } .ds-lg-forest { background: oklch(0.3 0.064 158 / 0.82); color: oklch(0.972 0.013 84); box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.34), inset 0 0 0 0.5px rgba(255,255,255,0.1), 0 10px 30px oklch(0.255 0.055 258 / 0.18); } .ds-lg-paper { background: oklch(0.972 0.013 84 / 0.62); color: oklch(0.255 0.055 258); box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.9), inset 0 0 0 0.5px rgba(255,255,255,0.4), 0 6px 18px oklch(0.255 0.055 258 / 0.12); } .ds-lg-selected { background: oklch(0.375 0.078 157); color: oklch(0.972 0.013 84); } .ds-lg:hover { filter: brightness(1.05); } @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .ds-lg-forest { background: oklch(0.3 0.064 158 / 0.96); } .ds-lg-paper { background: oklch(0.972 0.013 84 / 0.94); } }"
+    },
+    {
+      "name": "Glass Filter Chips",
+      "kind": "chip",
+      "description": "Paper liquid-glass capsules over the hero photo that filter the dashboard; the selected chip turns solid forest.",
+      "html": "<div class=\"ds-glass-stage\"><button class=\"ds-lg ds-lg-paper ds-lg-selected\" style=\"height:44px;padding:0 16px;border-radius:12px;font-size:0.875rem\">✓ All matches</button><button class=\"ds-lg ds-lg-paper\" style=\"height:44px;padding:0 16px;border-radius:12px;font-size:0.875rem\">Hunger</button><button class=\"ds-lg ds-lg-paper\" style=\"height:44px;padding:0 16px;border-radius:12px;font-size:0.875rem\">Near me</button></div>",
+      "css": ".ds-glass-stage { padding: 20px; background: oklch(0.88 0.06 190); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; } .ds-lg { position: relative; isolation: isolate; -webkit-backdrop-filter: saturate(170%) blur(22px); backdrop-filter: saturate(170%) blur(22px); font-family: 'Libre Franklin Variable', sans-serif; font-weight: 600; border: 0; cursor: pointer; transition: filter 200ms ease-out, scale 160ms ease-out; } .ds-lg:active { scale: 0.97; } .ds-lg:focus-visible { outline: 2px solid oklch(0.375 0.078 157); outline-offset: 2px; } .ds-lg-forest { background: oklch(0.3 0.064 158 / 0.82); color: oklch(0.972 0.013 84); box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.34), inset 0 0 0 0.5px rgba(255,255,255,0.1), 0 10px 30px oklch(0.255 0.055 258 / 0.18); } .ds-lg-paper { background: oklch(0.972 0.013 84 / 0.62); color: oklch(0.255 0.055 258); box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.9), inset 0 0 0 0.5px rgba(255,255,255,0.4), 0 6px 18px oklch(0.255 0.055 258 / 0.12); } .ds-lg-selected { background: oklch(0.375 0.078 157); color: oklch(0.972 0.013 84); } .ds-lg:hover { filter: brightness(1.05); } @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .ds-lg-forest { background: oklch(0.3 0.064 158 / 0.96); } .ds-lg-paper { background: oklch(0.972 0.013 84 / 0.94); } }"
+    },
     {
       "name": "Logo",
       "kind": "custom",
@@ -308,7 +338,7 @@
       "Hairline-ruled tables with right-aligned tabular figures and double-ruled totals.",
       "One bright green, used only as a highlighter behind money that reached programs.",
       "A grotesk for statements and figures, and a book serif for prose.",
-      "Square corners, flat print, no shadows."
+      "Square corners and flat print in the content layer, with liquid glass only on the nav, the floating action button and the filter chips."
     ],
     "rules": [
       {
@@ -337,8 +367,13 @@
         "section": "typography"
       },
       {
-        "name": "The Flat Print Rule",
-        "body": "If it would not survive being printed on uncoated stock, it does not belong: no shadows, glows, blur, or glass.",
+        "name": "The Solid Money Rule",
+        "body": "Money figures, tables and statements never sit on glass, and glass never sits on them as decoration. Glass is for things you press or navigate with, not things you read as evidence.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Three Places Rule",
+        "body": "Liquid glass appears in exactly three places: the top nav, the floating action button and the dashboard filter chips. Anything else that frosts is a bug.",
         "section": "elevation"
       }
     ],
@@ -354,12 +389,13 @@
     ],
     "donts": [
       "Don't use the money green for anything except money that reached programs: not nav states, success, badges, or selection controls.",
-      "Don't use purple, gradients, glassmorphism, or glowing shadows.",
       "Don't use emoji as icons. Icons come from Lucide at a consistent 1.75–2.5 stroke.",
       "Don't build a centered hero with a big headline and two buttons, or rows of three identical rounded cards.",
       "Don't use stock \"AI\" illustrations.",
       "Don't set Inter as the only font, or round everything to 2xl. Corners stay at 2px.",
-      "Don't put a big isolated number over a small label. Put the figure inside a sentence or a table."
+      "Don't put a big isolated number over a small label. Put the figure inside a sentence or a table.",
+      "Don't use purple, gradients as surfaces or backgrounds, or glowing shadows. The liquid glass rim and sheen are the only gradients.",
+      "Don't put glass anywhere but the top nav, the floating action button and the dashboard filter chips, and never over a money figure."
     ]
   }
 }

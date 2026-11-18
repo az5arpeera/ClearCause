@@ -20,7 +20,7 @@ export function Logo({ className }: { className?: string }) {
   return (
     <a href="/" className={cn("group flex items-center gap-2.5 no-underline", className)} aria-label="Clear Cause home">
       <LogoMark className="size-8 transition-transform duration-300 ease-out group-hover:-rotate-3" />
-      <span className="text-[1.3125rem] leading-none font-extrabold tracking-[-0.03em] text-paper">
+      <span className="text-[1.3125rem] leading-none font-extrabold tracking-[-0.03em] whitespace-nowrap text-paper">
         Clear <span className="text-forest-soft">Cause</span>
       </span>
     </a>

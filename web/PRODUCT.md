@@ -61,8 +61,7 @@ These constraints are fixed. Design work refines them but must not override them
   - One brighter green is used only for "money went here" highlights.
 - **Hard no's:**
   - purple;
-  - gradients;
-  - glassmorphism;
+  - gradients as surfaces or backgrounds (the liquid glass rim and sheen highlights are the one exception);
   - glowing shadows;
   - emoji as icons;
   - a centered hero with a big headline and two buttons;
@@ -70,6 +69,7 @@ These constraints are fixed. Design work refines them but must not override them
   - stock "AI" illustrations;
   - Inter as the only font;
   - everything rounded-2xl.
+- **Liquid glass (added 2026-11-11):** the top navigation and floating controls use Apple-style liquid glass, with refraction, a rim highlight and a frosted fallback. Glass sits over a soft green-and-blue photo so it has something to refract. Money figures and tables always stay on solid surfaces.
 
 ## Evidence on Hand
 
