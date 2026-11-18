@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react"
 import { ArrowRight, BadgeCheck, Check, CircleDashed, MapPin, ShieldCheck, Sprout } from "lucide-react"
 
+import { AuthControl } from "@/components/AuthControl"
 import { FloatingDonate } from "@/components/FloatingDonate"
 import { Logo } from "@/components/Logo"
 import { useLiquidGlass } from "@/lib/liquid-glass"
@@ -9,7 +10,6 @@ import { expenses, programs } from "@/data/sample-charity"
 import {
   auditChecks,
   auditGaps,
-  causes,
   counters,
   donor,
   orgs,
@@ -18,6 +18,7 @@ import {
   type Org,
   type PhotoKey,
 } from "@/data/sample-landing"
+import { causes } from "@/data/causes"
 
 const whole = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
 const exact = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 })
@@ -201,7 +202,7 @@ function Masthead() {
   ]
   return (
     <header className="lg lg-forest lg-text sticky top-0 z-40" data-refract="0.8" data-refract-bezel="10">
-      <div className="mx-auto flex h-16 max-w-[76rem] items-center gap-8 px-4 sm:px-6 lg:px-10">
+      <div className="mx-auto flex h-16 max-w-none items-center gap-8 px-4 sm:px-6 lg:px-10">
         <Logo />
         <nav aria-label="Primary" className="hidden h-full md:block">
           <ul className="flex h-full items-center gap-1.5">
@@ -220,10 +221,11 @@ function Masthead() {
           </a>
           <a
             href="#start"
-            className="nav-bubble nav-bubble-primary"
+            className="nav-bubble nav-bubble-primary hidden sm:inline-flex"
           >
             Find my matches
           </a>
+          <AuthControl />
         </div>
       </div>
     </header>
@@ -341,7 +343,7 @@ function CausePicker({ className }: { className?: string }) {
   const groupId = useId()
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
   return (
-    <form action="/matches" method="get" className={className}>
+    <form action="/quiz" method="get" className={className}>
       <fieldset>
         <legend id={groupId} className="text-[0.9375rem] font-semibold">
           What do you care about?
@@ -374,11 +376,11 @@ function CausePicker({ className }: { className?: string }) {
         type="submit"
         className="mt-5 inline-flex h-12 items-center gap-2 rounded-[2px] bg-forest px-6 text-base font-semibold text-paper transition-colors hover:bg-forest-deep"
       >
-        See my matches
+        Continue to the quiz
         <ArrowRight className="size-4" aria-hidden />
       </button>
       <p className="mt-2 text-[0.8125rem] text-ink-3" aria-live="polite">
-        {picked.length === 0 ? "Pick as many as you like, or none to browse." : `${picked.length} picked`}
+        {picked.length === 0 ? "Pick as many as you like, or skip this question." : `${picked.length} picked`}
       </p>
     </form>
   )
@@ -860,7 +862,7 @@ function OrgEntry({ org, layout, tickClass }: { org: Org; layout: "wide" | "port
           {org.name}
         </h3>
         <p className="mt-1 text-sm text-ink-2">
-          {org.kind} · {org.place} · {org.budget}
+          {org.kind} · {org.place} · ${Math.round(org.annualBudgetUsd / 1_000)}K a year
         </p>
         <p className="mt-3 max-w-[48ch] font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{org.note}</p>
         <dl data-money className="figures mt-4 text-[0.9375rem]">

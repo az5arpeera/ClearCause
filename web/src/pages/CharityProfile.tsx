@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent, type ReactNode } from "react"
 import { BadgeCheck, Check, CircleDashed } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { AuthControl } from "@/components/AuthControl"
 import { FloatingDonate } from "@/components/FloatingDonate"
 import { Logo } from "@/components/Logo"
 import { useLiquidGlass } from "@/lib/liquid-glass"
@@ -102,7 +103,7 @@ function Masthead() {
   ]
   return (
     <header className="lg lg-forest lg-text sticky top-0 z-40" data-refract="0.8" data-refract-bezel="10">
-      <div className="mx-auto flex max-w-[76rem] flex-wrap items-center gap-x-8 px-4 sm:h-14 sm:flex-nowrap sm:px-6 lg:px-10">
+      <div className="mx-auto flex max-w-none flex-wrap items-center gap-x-8 px-4 sm:h-14 sm:flex-nowrap sm:px-6 lg:px-10">
         <Logo className="h-14" />
         <nav
           aria-label="Primary"
@@ -122,12 +123,7 @@ function Masthead() {
             ))}
           </ul>
         </nav>
-        <span
-          className="ml-auto grid size-8 place-items-center rounded-full border border-paper/40 text-xs font-semibold"
-          aria-label={`Signed in as ${match.donor}`}
-        >
-          {match.donor[0]}
-        </span>
+        <AuthControl className="ml-auto" />
       </div>
     </header>
   )
