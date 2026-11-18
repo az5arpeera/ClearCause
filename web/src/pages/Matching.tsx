@@ -15,7 +15,7 @@ import {
   type CauseRow,
   type DonorPreferences,
 } from "@/lib/db"
-import { rankCharities, readPreferences, readScope, type MatchableCharity, type Preferences } from "@/lib/matching"
+import { rankCharities, readPreferences, type MatchableCharity, type Preferences } from "@/lib/matching"
 
 const primaryAction = "inline-flex min-h-11 items-center gap-2 rounded-sm bg-forest px-5 text-sm font-semibold text-paper no-underline hover:bg-forest-deep"
 const sectionTitle = "text-lg font-bold tracking-tight"
@@ -73,9 +73,9 @@ function PreferenceQuiz({
         </fieldset>
         <div className="border-t border-rule pt-6">
           <label htmlFor="giving-region" className={sectionTitle}>Where would you like to give?</label>
-          <p id="giving-region-hint" className="mt-1 text-sm text-ink-2">Options reflect where the listed charities are based.</p>
+          <p id="giving-region-hint" className="mt-1 text-sm text-ink-2">Pick a state to see only charities based there, or Anywhere for all of them.</p>
           <select id="giving-region" name="region" defaultValue={preferences.region} aria-describedby="giving-region-hint" className="mt-3 block min-h-11 w-full rounded-sm border border-input bg-paper px-3 text-sm sm:max-w-xs">
-            <option value="">Any state</option>
+            <option value="">Anywhere</option>
             {regions.map((region) => <option key={region}>{region}</option>)}
           </select>
         </div>
@@ -104,15 +104,6 @@ function PreferenceQuiz({
           </select>
         </div>
         <div className="border-t border-rule pt-6">
-          <label htmlFor="giving-scope" className={sectionTitle}>Where should the work happen?</label>
-          <select id="giving-scope" name="scope" defaultValue={preferences.locationScope || (donorPrefs?.location_scope ?? "")} className="mt-3 block min-h-11 w-full rounded-sm border border-input bg-paper px-3 text-sm sm:max-w-xs">
-            <option value="">No preference</option>
-            <option value="local">In my community</option>
-            <option value="national">Across the country</option>
-            <option value="global">Anywhere in the world</option>
-          </select>
-        </div>
-        <div className="border-t border-rule pt-6">
           <label htmlFor="giving-direct" className={sectionTitle}>Minimum that should reach the cause</label>
           <p id="giving-direct-hint" className="mt-1 text-sm text-ink-2">The share of spending that goes to programs rather than overhead. Leave blank for no minimum.</p>
           <div className="mt-3 flex items-center gap-2">
@@ -138,7 +129,6 @@ function MatchResults({ preferences, charities }: { preferences: Preferences; ch
   if (preferences.region) query.set("region", preferences.region)
   if (preferences.preferSmall) query.set("size", "small")
   if (preferences.directPctMin > 0) query.set("direct", String(preferences.directPctMin))
-  if (preferences.locationScope) query.set("scope", preferences.locationScope)
 
   return (
     <MatchingLayout title={hasPreferences ? "Your charity matches" : "Browse charities"}>
@@ -246,15 +236,11 @@ export default function Matching({ mode }: { mode: "quiz" | "results" }) {
     // Pre-fill from the URL if present, otherwise from the saved account preferences.
     const hasUrlCauses = params.getAll("causes").length > 0
     const hasUrlDirect = params.get("direct") !== null
-    const hasUrlScope = params.get("scope") !== null
     const quizCauses = !hasUrlCauses && user && savedCauses ? savedCauses : urlPreferences.causes
     const directPctMin = !hasUrlDirect && user && savedPrefs?.direct_pct_min != null
       ? savedPrefs.direct_pct_min
       : urlPreferences.directPctMin
-    const locationScope = !hasUrlScope && user && savedPrefs?.location_scope
-      ? readScope(savedPrefs.location_scope)
-      : urlPreferences.locationScope
-    const quizPreferences: Preferences = { ...urlPreferences, causes: quizCauses, directPctMin, locationScope }
+    const quizPreferences: Preferences = { ...urlPreferences, causes: quizCauses, directPctMin }
 
     const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault()
@@ -267,7 +253,6 @@ export default function Matching({ mode }: { mode: "quiz" | "results" }) {
         ? Math.max(0, Number(budgetRaw))
         : null
       const frequency = String(data.get("frequency") ?? "") || null
-      const locationScope = String(data.get("scope") ?? "") || null
       const directRaw = String(data.get("direct") ?? "").trim()
       const directPctMinValue = directRaw !== "" && Number.isFinite(Number(directRaw))
         ? Math.min(100, Math.max(0, Math.round(Number(directRaw))))
@@ -278,7 +263,6 @@ export default function Matching({ mode }: { mode: "quiz" | "results" }) {
       if (region) next.set("region", region)
       if (data.get("size")) next.set("size", "small")
       if (directPctMinValue) next.set("direct", String(directPctMinValue))
-      if (locationScope) next.set("scope", locationScope)
 
       if (user) {
         // Saving is best-effort; still show the matches if it fails.
@@ -291,7 +275,9 @@ export default function Matching({ mode }: { mode: "quiz" | "results" }) {
           await saveDonorPreferences(user.id, {
             giving_budget: givingBudget,
             frequency,
-            location_scope: locationScope,
+            // Derived from the single "where" control: a chosen state is a local
+            // preference; "Anywhere" is country-wide.
+            location_scope: region ? "local" : "national",
             direct_pct_min: directPctMinValue,
           })
         } catch {
