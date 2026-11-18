@@ -15,7 +15,7 @@ import {
   type CauseRow,
   type DonorPreferences,
 } from "@/lib/db"
-import { rankCharities, readPreferences, type MatchableCharity, type Preferences } from "@/lib/matching"
+import { rankCharities, readPreferences, readScope, type MatchableCharity, type Preferences } from "@/lib/matching"
 
 const primaryAction = "inline-flex min-h-11 items-center gap-2 rounded-sm bg-forest px-5 text-sm font-semibold text-paper no-underline hover:bg-forest-deep"
 const sectionTitle = "text-lg font-bold tracking-tight"
@@ -105,7 +105,7 @@ function PreferenceQuiz({
         </div>
         <div className="border-t border-rule pt-6">
           <label htmlFor="giving-scope" className={sectionTitle}>Where should the work happen?</label>
-          <select id="giving-scope" name="scope" defaultValue={donorPrefs?.location_scope ?? ""} className="mt-3 block min-h-11 w-full rounded-sm border border-input bg-paper px-3 text-sm sm:max-w-xs">
+          <select id="giving-scope" name="scope" defaultValue={preferences.locationScope || (donorPrefs?.location_scope ?? "")} className="mt-3 block min-h-11 w-full rounded-sm border border-input bg-paper px-3 text-sm sm:max-w-xs">
             <option value="">No preference</option>
             <option value="local">In my community</option>
             <option value="national">Across the country</option>
@@ -138,6 +138,7 @@ function MatchResults({ preferences, charities }: { preferences: Preferences; ch
   if (preferences.region) query.set("region", preferences.region)
   if (preferences.preferSmall) query.set("size", "small")
   if (preferences.directPctMin > 0) query.set("direct", String(preferences.directPctMin))
+  if (preferences.locationScope) query.set("scope", preferences.locationScope)
 
   return (
     <MatchingLayout title={hasPreferences ? "Your charity matches" : "Browse charities"}>
@@ -152,7 +153,7 @@ function MatchResults({ preferences, charities }: { preferences: Preferences; ch
       {charities.length === 0 ? (
         <p className="mt-8 border-t border-rule pt-5 text-ink-2">No charities are listed yet. Check back soon.</p>
       ) : results.length === 0 ? (
-        <p className="mt-8 border-t border-rule pt-5 text-ink-2">No charities cover the causes you selected. Try choosing another cause or browsing the full list.</p>
+        <p className="mt-8 border-t border-rule pt-5 text-ink-2">No charities match your answers. Try another cause, a lower minimum, or a wider area.</p>
       ) : (
         <ol className="mt-8 border-t border-ink" aria-label="Charities">
           {results.map(({ charity, score, reasons }) => (
@@ -245,11 +246,15 @@ export default function Matching({ mode }: { mode: "quiz" | "results" }) {
     // Pre-fill from the URL if present, otherwise from the saved account preferences.
     const hasUrlCauses = params.getAll("causes").length > 0
     const hasUrlDirect = params.get("direct") !== null
+    const hasUrlScope = params.get("scope") !== null
     const quizCauses = !hasUrlCauses && user && savedCauses ? savedCauses : urlPreferences.causes
     const directPctMin = !hasUrlDirect && user && savedPrefs?.direct_pct_min != null
       ? savedPrefs.direct_pct_min
       : urlPreferences.directPctMin
-    const quizPreferences: Preferences = { ...urlPreferences, causes: quizCauses, directPctMin }
+    const locationScope = !hasUrlScope && user && savedPrefs?.location_scope
+      ? readScope(savedPrefs.location_scope)
+      : urlPreferences.locationScope
+    const quizPreferences: Preferences = { ...urlPreferences, causes: quizCauses, directPctMin, locationScope }
 
     const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault()
@@ -273,6 +278,7 @@ export default function Matching({ mode }: { mode: "quiz" | "results" }) {
       if (region) next.set("region", region)
       if (data.get("size")) next.set("size", "small")
       if (directPctMinValue) next.set("direct", String(directPctMinValue))
+      if (locationScope) next.set("scope", locationScope)
 
       if (user) {
         // Saving is best-effort; still show the matches if it fails.

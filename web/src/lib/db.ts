@@ -20,6 +20,8 @@ type CharityRow = {
   description: string | null
   location_city: string | null
   location_region: string | null
+  transparency_score: number | null
+  is_partner: boolean | null
   charity_causes: { causes: { slug: string } | null }[] | null
   charity_financials:
     | { fiscal_year: number; total_expenses: number | null; program_expense_ratio: number | null }[]
@@ -31,7 +33,7 @@ export async function fetchVettedCharities(): Promise<MatchableCharity[]> {
   const { data, error } = await supabase
     .from("charities")
     .select(
-      "id, name, description, location_city, location_region, " +
+      "id, name, description, location_city, location_region, transparency_score, is_partner, " +
         "charity_causes ( causes ( slug ) ), " +
         "charity_financials ( fiscal_year, total_expenses, program_expense_ratio )",
     )
@@ -62,6 +64,8 @@ export async function fetchVettedCharities(): Promise<MatchableCharity[]> {
         latest?.program_expense_ratio != null
           ? Math.round(Number(latest.program_expense_ratio) * 100)
           : undefined,
+      transparencyScore: c.transparency_score != null ? Number(c.transparency_score) : undefined,
+      isPartner: c.is_partner ?? false,
     } satisfies MatchableCharity
   })
 }
