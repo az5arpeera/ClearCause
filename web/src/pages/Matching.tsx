@@ -73,7 +73,7 @@ function PreferenceQuiz({
         </fieldset>
         <div className="border-t border-rule pt-6">
           <label htmlFor="giving-region" className={sectionTitle}>Where would you like to give?</label>
-          <p id="giving-region-hint" className="mt-1 text-sm text-ink-2">Pick a state to see only charities based there, or Anywhere for all of them.</p>
+          <p id="giving-region-hint" className="mt-1 text-sm text-ink-2">Pick a state to surface charities based there first, or Anywhere for no preference.</p>
           <select id="giving-region" name="region" defaultValue={preferences.region} aria-describedby="giving-region-hint" className="mt-3 block min-h-11 w-full rounded-sm border border-input bg-paper px-3 text-sm sm:max-w-xs">
             <option value="">Anywhere</option>
             {regions.map((region) => <option key={region}>{region}</option>)}
@@ -143,7 +143,7 @@ function MatchResults({ preferences, charities }: { preferences: Preferences; ch
       {charities.length === 0 ? (
         <p className="mt-8 border-t border-rule pt-5 text-ink-2">No charities are listed yet. Check back soon.</p>
       ) : results.length === 0 ? (
-        <p className="mt-8 border-t border-rule pt-5 text-ink-2">No charities match your answers. Try another cause, a lower minimum, or a wider area.</p>
+        <p className="mt-8 border-t border-rule pt-5 text-ink-2">No charities match your answers. Try another cause or a lower minimum.</p>
       ) : (
         <ol className="mt-8 border-t border-ink" aria-label="Charities">
           {results.map(({ charity, score, reasons }) => (

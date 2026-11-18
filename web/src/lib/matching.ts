@@ -14,6 +14,12 @@ export const weights = {
 // un-scraped charities aren't buried (docs/matching-algorithm.md §6).
 const neutralNorm = 0.5
 
+// Soft ordering nudges: a chosen region and "prefer small" lift matching
+// charities in the ranking without hiding others or changing the shown score.
+// Sized so they can overcome a small relevance gap but not a decisive one.
+const regionNudge = 0.08
+const smallBudgetNudge = 0.04
+
 export interface Preferences {
   causes: CauseId[]
   /** A chosen state restricts results to it; "" means anywhere. */
@@ -56,25 +62,24 @@ export function readPreferences(params: URLSearchParams, regions: readonly strin
  * Content-based matcher from docs/matching-algorithm.md: a two-stage
  * filter → score → rank pipeline.
  *
- * Stage 1 — hard filters (eligibility): a chosen region and a minimum
- * program-efficiency floor.
+ * Stage 1 — hard filter (eligibility): a minimum program-efficiency floor.
  * Stage 2 — composite relevance (0..1): weighted cosine of the donor's causes
  * against the charity's, plus transparency, efficiency, and partner terms.
  *
  * `score` is the composite as a percentage, shown only once the donor has
  * picked causes (their primary signal); with no causes the list still ranks by
- * the remaining quality terms. `preferSmall` acts as a tie-breaker.
+ * the remaining quality terms. A chosen region and `preferSmall` are soft
+ * ordering nudges — they lift matching charities without hiding anyone or
+ * changing the shown score.
  */
 export function rankCharities(charities: readonly MatchableCharity[], preferences: Preferences) {
   const selectedCauses = new Set(preferences.causes)
   const hasCauses = selectedCauses.size > 0
   const donorNorm = Math.sqrt(selectedCauses.size) // ‖d‖ with unit cause weights
   const wantsDirect = preferences.directPctMin > 0
-  const wantsRegion = Boolean(preferences.region)
 
   return charities.flatMap((charity) => {
-    // ---- Stage 1: hard filters ------------------------------------------
-    if (wantsRegion && charity.region !== preferences.region) return []
+    // ---- Stage 1: hard filter (eligibility) -----------------------------
     if (wantsDirect && charity.directPct !== undefined && charity.directPct < preferences.directPctMin) return []
 
     const matchedCauses = causes.filter(({ id }) => selectedCauses.has(id) && charity.causes.includes(id))
@@ -95,13 +100,17 @@ export function rankCharities(charities: readonly MatchableCharity[], preference
       + weights.efficiency * efficiencyNorm
       + weights.partner * partnerFlag
 
+    const sameRegion = Boolean(preferences.region) && charity.region === preferences.region
     const smallBudget = preferences.preferSmall && charity.annualBudgetUsd !== undefined
       && charity.annualBudgetUsd >= 0 && charity.annualBudgetUsd < smallBudgetUsd
 
+    // Ordering key = displayed relevance plus the soft nudges.
+    const ranking = relevance + (sameRegion ? regionNudge : 0) + (smallBudget ? smallBudgetNudge : 0)
+
     return [{
       charity,
+      ranking,
       relevance,
-      smallBudget,
       transparencyNorm,
       partnerFlag,
       score: hasCauses ? Math.round(100 * relevance) : null,
@@ -110,11 +119,12 @@ export function rankCharities(charities: readonly MatchableCharity[], preference
         ...(charity.transparencyScore != null && charity.transparencyScore >= 85 ? ["High transparency"] : []),
         ...(charity.directPct != null && charity.directPct >= 80 ? [`${charity.directPct}% reaches the cause`] : []),
         ...(charity.isPartner ? ["Vetted partner"] : []),
+        ...(sameRegion ? [`Based in ${charity.region}`] : []),
       ],
     }]
   }).sort((a, b) =>
-    b.relevance - a.relevance
-    || Number(b.smallBudget) - Number(a.smallBudget)
+    b.ranking - a.ranking
+    || b.relevance - a.relevance
     || b.transparencyNorm - a.transparencyNorm
     || b.partnerFlag - a.partnerFlag
     || a.charity.name.localeCompare(b.charity.name)
