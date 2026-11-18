@@ -1,6 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react"
 import { ArrowRight, BadgeCheck, Check, CircleDashed, MapPin, ShieldCheck, Sprout } from "lucide-react"
 
+import { AuthControl } from "@/components/AuthControl"
 import { Logo } from "@/components/Logo"
 import { cn } from "@/lib/utils"
 import { expenses, programs } from "@/data/sample-charity"
@@ -193,8 +194,8 @@ function Masthead() {
     ["Partners", "#partners"],
   ]
   return (
-    <header className="bg-forest-deep text-paper">
-      <div className="mx-auto flex h-16 max-w-[76rem] items-center gap-10 px-4 sm:px-6 lg:px-10">
+    <header className="sticky top-0 z-40 bg-forest-deep text-paper">
+      <div className="mx-auto flex h-16 max-w-none items-center gap-10 px-4 sm:px-6 lg:px-10">
         <Logo />
         <nav aria-label="Primary" className="hidden h-full md:block">
           <ul className="flex h-full items-center gap-6 text-sm">
@@ -217,6 +218,7 @@ function Masthead() {
           >
             Find my matches
           </a>
+          <AuthControl />
         </div>
       </div>
     </header>

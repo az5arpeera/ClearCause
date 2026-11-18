@@ -33,8 +33,8 @@ Why it matters
 - [ ] Contact Form
 
 #### Shaheer
-- [ ] Authentication (Email, google, yahoo)
-- [ ] database schemas: (user prefs, charity financials (from scrape), etc (tbd for now)
+- [x] Authentication (Email, google, yahoo)
+- [x] database schemas: (user prefs, charity financials (from scrape), etc (tbd for now)
 - [ ] matching algorithm
 
 #### Ali
@@ -52,6 +52,8 @@ Why it matters
 ## later but necessary for MVP / phase 1 
 - [ ] buy a domain name
 - [ ] seperate test and prod endpoints
+- [ ] CAPTCHA on sign-up (hCaptcha / Cloudflare Turnstile) to stop bot spam
+- [ ] custom SMTP for auth emails (built-in Supabase mailer is dev-only / rate-limited)
 
 ## Architecture/Tech Stack
 - Typescript
