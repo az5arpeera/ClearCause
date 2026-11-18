@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import CharityProfile from '@/pages/CharityProfile'
+import { NORTHSIDE_ID } from '@/data/sample-charity'
 import Landing from '@/pages/Landing'
 import Matching from '@/pages/Matching'
 import Placeholder from '@/pages/Placeholder'
@@ -11,13 +12,17 @@ function App() {
 
   const routes = new Map([
     ['/', { title: 'Clear Cause · Give to the causes you\'d actually choose', page: <Landing /> }],
-    ['/charity/northside', { title: 'Northside Community Pantry · Clear Cause', page: <CharityProfile /> }],
     ['/quiz', { title: 'Giving preferences · Clear Cause', page: <Matching mode="quiz" /> }],
     ['/matches', { title: 'Your matches · Clear Cause', page: <Matching mode="results" /> }],
     ['/signin', { title: 'Sign in · Clear Cause', page: <SignIn /> }],
     ['/partners', { title: 'Become a partner · Clear Cause', page: <Placeholder kind="partners" /> }],
   ])
-  const route = routes.get(path) ?? { title: 'Not found · Clear Cause', page: <Placeholder kind="missing" /> }
+  // /charity/<id> reads any vetted charity; /charity/northside keeps old links working.
+  const charityMatch = path.match(/^\/charity\/([^/]+)$/)
+  const charityId = charityMatch ? (charityMatch[1] === 'northside' ? NORTHSIDE_ID : decodeURIComponent(charityMatch[1])) : null
+  const route = charityId
+    ? { title: 'Charity · Clear Cause', page: <CharityProfile id={charityId} /> }
+    : routes.get(path) ?? { title: 'Not found · Clear Cause', page: <Placeholder kind="missing" /> }
 
   useEffect(() => {
     document.title = route.title

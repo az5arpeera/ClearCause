@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import { ArrowRight } from "lucide-react"
 
-import { AuthControl } from "@/components/AuthControl"
-import { Logo } from "@/components/Logo"
+import { SiteHeader } from "@/components/SiteHeader"
 import { causes, type CauseId } from "@/data/causes"
 import { useAuth } from "@/lib/auth"
 import {
@@ -15,7 +14,9 @@ import {
   type CauseRow,
   type DonorPreferences,
 } from "@/lib/db"
+import { useLiquidGlass } from "@/lib/liquid-glass"
 import { rankCharities, readPreferences, type MatchableCharity, type Preferences } from "@/lib/matching"
+import { compactUsd } from "@/lib/money"
 
 const primaryAction = "inline-flex min-h-11 items-center gap-2 rounded-sm bg-forest px-5 text-sm font-semibold text-paper no-underline hover:bg-forest-deep"
 const sectionTitle = "text-lg font-bold tracking-tight"
@@ -23,12 +24,7 @@ const sectionTitle = "text-lg font-bold tracking-tight"
 function MatchingLayout({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="min-h-svh bg-paper text-ink">
-      <header className="sticky top-0 z-40 bg-forest-deep text-paper">
-        <div className="mx-auto flex h-16 max-w-none items-center px-4 sm:px-6 lg:px-10">
-          <Logo />
-          <AuthControl className="ml-auto" />
-        </div>
-      </header>
+      <SiteHeader />
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
         <h1 className="border-t-2 border-forest pt-5 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">{title}</h1>
         {children}
@@ -146,25 +142,60 @@ function MatchResults({ preferences, charities }: { preferences: Preferences; ch
         <p className="mt-8 border-t border-rule pt-5 text-ink-2">No charities match your answers. Try another cause or a lower minimum.</p>
       ) : (
         <ol className="mt-8 border-t border-ink" aria-label="Charities">
-          {results.map(({ charity, score, reasons }) => (
-            <li key={charity.id} className="border-b border-rule py-5">
-              <div className="flex items-start justify-between gap-4">
-                <h2 className={sectionTitle}>{charity.name}</h2>
-                {score !== null && <span className="figures shrink-0 rounded-sm bg-forest-soft px-2 py-1 text-sm font-semibold text-forest-deep">{score}% fit</span>}
-              </div>
-              <p className="mt-1 text-sm text-ink-2">{charity.place}</p>
-              <p className="mt-2 font-serif text-ink-2">{charity.description}</p>
-              {reasons.length > 0 && <p className="mt-3 text-sm font-medium text-forest">{reasons.join(" · ")}</p>}
-              {charity.href && <a href={charity.href} className="mt-3 inline-block text-sm font-semibold text-forest underline">View profile</a>}
-            </li>
-          ))}
+          {results.map(({ charity, score, reasons }) => {
+            const href = charity.href ? `${charity.href}${query.size ? `?${query}` : ""}` : null
+            const meta = [charity.place, charity.annualBudgetUsd != null ? `${compactUsd(charity.annualBudgetUsd)} a year` : null]
+              .filter(Boolean)
+              .join(" · ")
+            return (
+              <li key={charity.id} className="border-b border-rule py-6">
+                <div className="flex items-start justify-between gap-4">
+                  <h2 className={sectionTitle}>
+                    {href ? (
+                      <a href={href} className="no-underline hover:text-forest hover:underline">
+                        {charity.name}
+                      </a>
+                    ) : (
+                      charity.name
+                    )}
+                  </h2>
+                  {score !== null && <span className="figures shrink-0 rounded-[2px] bg-forest-soft px-2 py-1 text-sm font-semibold text-forest-deep">{score}% fit</span>}
+                </div>
+                <p className="mt-1 text-sm text-ink-2">{meta}</p>
+                <p className="mt-2 max-w-[62ch] font-serif text-ink-2">{charity.description}</p>
+                {charity.directPct != null ? <CentsBar pct={charity.directPct} /> : null}
+                {reasons.length > 0 && <p className="mt-3 text-sm font-medium text-forest">{reasons.join(" · ")}</p>}
+                {href && (
+                  <a href={href} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-forest underline decoration-forest/40 hover:decoration-forest">
+                    See where the money goes
+                    <ArrowRight className="size-3.5" aria-hidden />
+                  </a>
+                )}
+              </li>
+            )
+          })}
         </ol>
       )}
     </MatchingLayout>
   )
 }
 
+/** A compact 100-cent bar: how much of each dollar reached programs. */
+function CentsBar({ pct }: { pct: number }) {
+  return (
+    <div data-money className="mt-3 flex items-center gap-3">
+      <div role="img" aria-label={`${pct} of every 100 cents reached programs`} className="grid w-full max-w-[16rem] grid-cols-[repeat(25,minmax(0,1fr))] gap-[2px]">
+        {Array.from({ length: 25 }, (_, i) => (
+          <span key={i} className={i < Math.round(pct / 4) ? "aspect-square bg-money" : "aspect-square bg-admin/35"} />
+        ))}
+      </div>
+      <span className="figures shrink-0 text-sm font-semibold">{pct}¢ of $1 to programs</span>
+    </div>
+  )
+}
+
 export default function Matching({ mode }: { mode: "quiz" | "results" }) {
+  useLiquidGlass()
   const { user } = useAuth()
   const [charities, setCharities] = useState<MatchableCharity[] | null>(null)
   const [causeRows, setCauseRows] = useState<CauseRow[]>([])

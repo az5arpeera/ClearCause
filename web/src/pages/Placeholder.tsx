@@ -1,6 +1,6 @@
 import { ArrowLeft } from "lucide-react"
 
-import { Logo } from "@/components/Logo"
+import { SiteHeader } from "@/components/SiteHeader"
 type Kind = "partners" | "missing"
 
 const copy: Record<Kind, { title: string; body: string }> = {
@@ -19,11 +19,7 @@ export default function Placeholder({ kind }: { kind: Kind }) {
 
   return (
     <div className="flex min-h-svh flex-col bg-paper text-ink">
-      <header className="sticky top-0 z-40 bg-forest-deep text-paper">
-        <div className="mx-auto flex h-16 max-w-none items-center px-4 sm:px-6 lg:px-10">
-          <Logo />
-        </div>
-      </header>
+      <SiteHeader />
       <main className="mx-auto w-full max-w-[76rem] flex-1 px-4 py-16 sm:px-6 lg:px-10 lg:py-24">
         <div className="max-w-[40rem] border-t-2 border-forest pt-5">
           <h1 className="text-[2rem] leading-tight font-bold tracking-[-0.02em] text-balance">{title}</h1>

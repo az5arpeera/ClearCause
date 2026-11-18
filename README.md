@@ -86,9 +86,15 @@ cd web
 npm ci
 npm run dev
 
-Start from the landing page's cause picker or open /quiz directly. The quiz asks about causes, a preferred state, and whether to favor charities with annual budgets under $1 million. Each answer is optional. Results use fictional sample charities and show the preferences each result matched. Preferences travel in the URL so the results page can reopen the quiz with the same answers.
+Start from the landing page's cause picker or open /quiz directly. The quiz asks about causes, a preferred state, charity size, a typical gift, how often you give, and a minimum share reaching programs. Each answer is optional, and signed-in donors have them saved to Supabase. Preferences travel in the URL, so results, profiles and "Edit my preferences" all reopen with the same answers.
 
-The matcher in [web/src/lib/matching.ts](web/src/lib/matching.ts) requires at least one cause in common when causes are selected. It gives up to four points for the fraction of selected causes covered, two points for a matching state, and one point for a known budget under $1 million when that preference is selected. The fit percentage divides the points earned by the maximum for the answered questions. With no answers, the catalog is listed alphabetically without scores.
+Every page reads live data from Supabase (vetted charities only, under RLS):
+
+- **Landing page** (`/`): live counters (charities listed, partners, share under $1M, median cents to programs), "Follow $1.00" from a real charity's latest statement, and the three most transparent small charities.
+- **Matches** (`/matches`): the ranked list from [web/src/lib/matching.ts](web/src/lib/matching.ts), each with a cents-to-programs bar and a link to its profile.
+- **Charity profile** (`/charity/<id>`): where each dollar went, year by year when there are several statements, how it fits your quiz answers, and where every figure came from (the statement PDF and page, when the scraper supplied it).
+
+The matcher is the content-based model in [docs/matching-algorithm.md](docs/matching-algorithm.md): cosine similarity between your causes and the charity's (60%), transparency (20%), share reaching programs (15%) and partner status (5%). A minimum program share is a hard filter; a chosen state and "prefer small" are soft ranking nudges.
 
 ### Scrape charity website metadata - Ali
 
@@ -112,4 +118,16 @@ Extraction covers supported statement of activities and balance sheet layouts. J
 
 Run the discovery and extraction regression checks with `python -B -m unittest scripts.test_scrape_charities`.
 
-Review the candidate's identity, description, location, and source links before publication. To feed a reviewed record into matching, assign cause IDs from [web/src/data/causes.ts](web/src/data/causes.ts), normalize the state name, and supply an annual budget only when it is documented. The matcher accepts those reviewed fields through its MatchableCharity type. The prototype currently reads its catalog from [web/src/data/sample-matches.ts](web/src/data/sample-matches.ts).
+### From scraper output to the live site
+
+Turn the scraper's JSON into a reviewable migration (PowerShell's UTF-16 output is fine):
+
+```powershell
+python scripts/import_candidates.py charity-candidates.json
+```
+
+This writes the next file in `supabase/migrations/`. Each charity is added as `pending`, which keeps it off the public site, with one `charity_financials` row per fiscal year it read: revenue, total, program, admin and fundraising expenses, the program ratio, and a `source_url` pointing at the exact statement page (`report.pdf#page=4`). Re-running the import updates the figures but never changes a charity's vetting status. The charity's id is derived from its source URL, so it stays the same between runs.
+
+Before publishing, a reviewer checks each figure against its cited page (OCR figures especially), tags causes in `charity_causes` using the slugs in [web/src/data/causes.ts](web/src/data/causes.ts), and sets `vetting_status = 'vetted'`. Then apply it with `supabase db push`. The charity then appears in matches and gets a profile at `/charity/<id>`, with every figure linked to its source page.
+
+Run the importer checks with `python -B -m unittest scripts.test_import_candidates`.

@@ -131,3 +131,13 @@ export const match = {
 }
 
 export const presetGifts = [25, 50, 100, 250]
+
+/**
+ * Northside's database id (supabase/migrations/0003_seed_charities.sql). The
+ * live profile reads its figures from the database; these hand-written extras
+ * (programs, payments, audit lists) only add detail the schema doesn't hold yet.
+ * Program spending here sums to the database's program_expenses (334,500).
+ */
+export const NORTHSIDE_ID = "10000000-0000-4000-8000-000000000001"
+
+export const northsideExtras = { programs, disbursements, audited, selfReported }
