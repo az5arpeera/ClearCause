@@ -13,7 +13,7 @@ Next Steps:
 - for you page that has the filtered out charities from you quiz (the quiz should not constrain the for you page, it should suggest charities as an algoriihtm),
 - quiz should be a one time onboarding, and then redierect to a froyou tab. 
 - UI should be consistent on other pages; not just main landing page. 
-- nav should include: explore, foryou, about, contact
+- nav should include: explore, for you, about, contact
 - profile page should include: profile picture, profile quiz answers, credit information
 - individual pages for each charity.
 
