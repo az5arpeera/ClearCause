@@ -5,6 +5,7 @@ import { CharityRow } from "@/components/CharityRow"
 import { PageFrame } from "@/components/Glass"
 import { glassChip, glassPanel, refract } from "@/lib/glass"
 import { causes, type CauseId } from "@/data/causes"
+import { stateName } from "@/data/us-states"
 import { fetchVettedCharityDetails, type CharityDetail } from "@/lib/db"
 import { useLiquidGlass } from "@/lib/liquid-glass"
 import { hasCompletedQuiz } from "@/lib/preferences"
@@ -306,7 +307,7 @@ function FiltersPanel({
           <option value="">Anywhere ({stateFacet.length})</option>
           {states.map((s) => (
             <option key={s} value={s}>
-              {s} ({stateFacet.filter((c) => c.region === s).length})
+              {stateName[s] ?? s} ({stateFacet.filter((c) => c.region === s).length})
             </option>
           ))}
         </select>
@@ -515,7 +516,7 @@ function ActiveFilters({
       label: causes.find((x) => x.id === c)?.label ?? c,
       remove: () => set({ causes: f.causes.filter((x) => x !== c) }),
     })),
-    ...(f.state ? [{ key: "state", label: f.state, remove: () => set({ state: "" }) }] : []),
+    ...(f.state ? [{ key: "state", label: stateName[f.state] ?? f.state, remove: () => set({ state: "" }) }] : []),
     ...METRICS.flatMap((m) => {
       const band = BANDS[m].bands.find((b) => b.id === f.bands[m])
       return band ? [{ key: m, label: `${BANDS[m].title}: ${band.label}`, remove: () => toggleBand(m, band.id) }] : []

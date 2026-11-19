@@ -1,4 +1,5 @@
 import { causes, type CauseId } from "../data/causes.ts"
+import { stateName } from "../data/us-states.ts"
 
 export const smallBudgetUsd = 1_000_000
 
@@ -119,7 +120,7 @@ export function rankCharities(charities: readonly MatchableCharity[], preference
         ...(charity.transparencyScore != null && charity.transparencyScore >= 85 ? ["High transparency"] : []),
         ...(charity.directPct != null && charity.directPct >= 80 ? [`${charity.directPct}% reaches the cause`] : []),
         ...(charity.isPartner ? ["Vetted partner"] : []),
-        ...(sameRegion ? [`Based in ${charity.region}`] : []),
+        ...(sameRegion ? [`Based in ${stateName[charity.region!] ?? charity.region}`] : []),
       ],
     }]
   }).sort((a, b) =>
@@ -174,7 +175,7 @@ export function suggestCharities<T extends MatchableCharity>(charities: readonly
       score: hasCauses ? Math.round(100 * relevance) : null,
       reasons: [
         ...matchedCauses.map(({ label }) => label),
-        ...(sameRegion ? [`Based in ${charity.region}`] : []),
+        ...(sameRegion ? [`Based in ${stateName[charity.region!] ?? charity.region}`] : []),
         ...(smallBudget ? ["Small organization"] : []),
         ...(charity.transparencyScore != null && charity.transparencyScore >= 85 ? ["High transparency"] : []),
         ...(charity.directPct != null && charity.directPct >= 80 ? [`${charity.directPct}% reaches the cause`] : []),
