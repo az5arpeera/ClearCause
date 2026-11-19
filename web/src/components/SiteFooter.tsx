@@ -41,8 +41,8 @@ export function SiteFooter({ note }: { note?: ReactNode }) {
         <div className="mx-auto max-w-[76rem] space-y-1 px-4 py-5 text-[0.8125rem] leading-relaxed text-pretty text-paper/70 sm:px-6 lg:px-10 [&>p]:max-w-[78ch]">
           {note ? <p>{note}</p> : null}
           <p>
-            Prototype; donations aren't live yet. Charity figures come from charities' own statements and from IRS Form 990 data
-            via ProPublica's Nonprofit Explorer, cited on each charity's page. Photos are stock images from Unsplash by{" "}
+            Prototype; donations aren't live yet. Charity figures come from charities' own statements and from IRS Form 990 filings
+            (from the IRS, and for some earlier entries via ProPublica's Nonprofit Explorer), cited on each charity's page. Photos are stock images from Unsplash by{" "}
             {photoCredits}.
           </p>
         </div>

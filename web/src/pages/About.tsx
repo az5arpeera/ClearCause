@@ -49,12 +49,14 @@ export default function About() {
 
         <Section id="sources" title="Where charities and figures come from">
           <p>
-            We find charities two ways: from their own published financial statements, and from the IRS Form 990 filings that
-            nonprofits file each year, which we read through{" "}
+            Every week we look through the IRS's public records of tax-exempt organizations for small charities working on the
+            causes we cover, and read the Form 990 each one files: what it took in, what it spent, and how much of that went to
+            its programs. Where a charity publishes audited financial statements on its website, our scraper reads those too,
+            and their figures take priority. Some earlier figures came through{" "}
             <a href="https://projects.propublica.org/nonprofits/" target="_blank" rel="noreferrer" className="font-semibold text-forest underline">
               ProPublica's Nonprofit Explorer
             </a>
-            .
+            , and say so.
           </p>
           <p>
             A charity found this way isn't listed straight away. It starts as pending, someone on our team checks its figures

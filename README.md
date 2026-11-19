@@ -132,6 +132,30 @@ Before publishing, a reviewer checks each figure against its cited page (OCR fig
 
 Run the importer checks with `python -B -m unittest scripts.test_import_candidates`.
 
+### Automatic charity discovery (weekly)
+
+The **Discover charities** GitHub Action (`.github/workflows/discover-charities.yml`) runs every Monday, and on demand from the Actions tab:
+
+1. `scripts/irs_candidates.py` reads the IRS register of tax-exempt organizations for every state and keeps small 501(c)(3) public charities (revenue $50K to $5M) whose NTEE code matches one of our causes. It skips any EIN already in the database.
+2. For each one it fetches only that charity's latest Form 990 / 990-EZ from the IRS e-file archives (HTTP range requests, so nothing large is downloaded). The return gives the name, city, mission, website, revenue, expenses and, on a full Form 990, the program / management / fundraising split.
+3. Our scraper (`scrape_charities.py`) then visits each charity's website, plus every site listed in `scripts/charity-websites.txt`, looking for audited statements; those figures take priority over the return for the same year.
+4. `import_candidates.py` writes everything into Supabase as **pending**, matched by EIN so nothing is added twice. Figures cite the IRS page for the charity.
+
+Admins then review at **`/admin/review`**: check the figures against the linked source, fix the causes, and approve or reject. Approved charities appear on the site straight away.
+
+**One-time setup** (someone with Supabase access):
+- Add a repository secret `SUPABASE_DB_URL` (GitHub → Settings → Secrets and variables → Actions). Use the **Session pooler** connection string from Supabase → Project Settings → Database, since GitHub's runners connect over IPv4.
+- Make reviewers admins in the SQL Editor: `update public.profiles set role = 'admin' where id = (select id from auth.users where email = '...');`
+
+To try it locally without touching the database:
+
+```powershell
+python scripts/irs_candidates.py --states VT RI --per-state-cause 1 --scrape-minutes 5 --out candidates.json
+python scripts/import_candidates.py candidates.json --out import.sql
+```
+
+A few IRS archives use Deflate64 compression; reading them needs `inflate64` (in `scripts/requirements.txt`). Without it those archives are skipped. Run the checks with `python -B -m unittest scripts.test_irs_candidates`.
+
 ### Finding real charities via ProPublica
 
 `scripts/discover_propublica.py` searches ProPublica's Nonprofit Explorer API (IRS Form 990 data) for small charities in each Clear Cause cause, by state, and writes records in the scraper's format, with an EIN and cause tags:

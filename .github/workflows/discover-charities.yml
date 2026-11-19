@@ -1,0 +1,116 @@
+name: Discover charities
+
+# Weekly: find new small charities in IRS data, run the team's website
+# scraper on their sites (and on scripts/charity-websites.txt), and import
+# them into Supabase as *pending*. Nothing goes live until an admin
+# approves it at /admin/review.
+#
+# Needs one repository secret, SUPABASE_DB_URL: the Postgres connection
+# string from Supabase (Project Settings -> Database -> Connection string ->
+# "Session pooler", which works over IPv4 like GitHub's runners).
+
+on:
+  schedule:
+    - cron: "0 7 * * 1" # Mondays 07:00 UTC
+  workflow_dispatch:
+    inputs:
+      per_state_cause:
+        description: New charities per state and cause
+        default: "2"
+      states:
+        description: States to search (space separated, blank = all)
+        default: ""
+      scrape_minutes:
+        description: Minutes to spend scraping websites
+        default: "90"
+      dry_run:
+        description: Find and build the SQL, but don't write to Supabase
+        type: boolean
+        default: false
+
+concurrency:
+  group: discover-charities
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      DRY_RUN: ${{ inputs.dry_run || false }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements.txt
+
+      - name: Install scraper dependencies (OCR, Postgres client)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-eng postgresql-client
+          python -m pip install -r scripts/requirements.txt
+
+      - name: Check the database secret
+        if: env.DRY_RUN != 'true'
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Add the SUPABASE_DB_URL repository secret (see the top of this workflow)."
+            exit 1
+          fi
+
+      - name: List charities already in the database
+        run: |
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            psql "$SUPABASE_DB_URL" -At -c "select ein from public.charities where ein is not null" > known-eins.txt
+            psql "$SUPABASE_DB_URL" -At -c "select website_url from public.charities where website_url is not null" > known-websites.txt
+          else
+            : > known-eins.txt; : > known-websites.txt
+          fi
+          echo "Already have $(wc -l < known-eins.txt) charities with an EIN."
+
+      - name: Find charities and scrape their websites
+        run: |
+          python -B scripts/irs_candidates.py \
+            --per-state-cause "${{ inputs.per_state_cause || '2' }}" \
+            ${{ inputs.states && format('--states {0}', inputs.states) || '' }} \
+            --scrape-minutes "${{ inputs.scrape_minutes || '90' }}" \
+            --skip-eins known-eins.txt \
+            --websites scripts/charity-websites.txt \
+            --skip-websites known-websites.txt \
+            --out candidates.json 2> discover.log
+          tail -n 40 discover.log
+
+      - name: Build the import
+        run: |
+          if python -c "import json, sys; sys.exit(0 if json.load(open('candidates.json')) else 1)"; then
+            python -B scripts/import_candidates.py candidates.json --out import.sql
+          else
+            : > import.sql
+            echo "### No new charities found this week" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Import into Supabase as pending
+        if: env.DRY_RUN != 'true'
+        run: |
+          if [ ! -s import.sql ]; then echo "Nothing to import."; exit 0; fi
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 --single-transaction -q -f import.sql
+          echo "### Imported $(grep -c '^insert into public.charities' import.sql) charities as pending" >> "$GITHUB_STEP_SUMMARY"
+          echo "Review them at /admin/review on the site." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the run's files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: discover-charities-${{ github.run_number }}
+          path: |
+            candidates.json
+            import.sql
+            discover.log
+          retention-days: 30

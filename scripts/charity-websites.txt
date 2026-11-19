@@ -1,0 +1,10 @@
+# Charity websites for the weekly scraper, one per line.
+#
+# Add the home page (or "About" page) of any charity you'd like on Clear Cause.
+# The weekly "Discover charities" GitHub job runs scripts/scrape_charities.py
+# on every site here that isn't in the database yet, and imports what it
+# finds as *pending*. An admin then tags causes and approves it at
+# /admin/review on the site.
+#
+# Lines starting with # are ignored. Example:
+# https://www.examplefoodpantry.org/
