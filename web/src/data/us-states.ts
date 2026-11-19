@@ -13,3 +13,13 @@ export const usStates = [
 ].map(([code, name]) => ({ code, name }))
 
 export const stateName = Object.fromEntries(usStates.map((s) => [s.code, s.name])) as Record<string, string>
+
+const codeByName = Object.fromEntries(usStates.map((s) => [s.name.toLowerCase(), s.code])) as Record<string, string>
+
+/** "Ohio", "ohio" or "OH" -> "OH". Unknown values pass through unchanged. */
+export function stateCode(value: string | null | undefined) {
+  if (!value) return undefined
+  const v = value.trim()
+  if (stateName[v.toUpperCase()]) return v.toUpperCase()
+  return codeByName[v.toLowerCase()] ?? v
+}

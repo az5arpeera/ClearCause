@@ -1,6 +1,7 @@
 import { causes as uiCauses, type CauseId } from "@/data/causes"
 import type { MatchableCharity } from "@/lib/matching"
 import { supabase } from "@/lib/supabase"
+import { stateCode, stateName } from "@/data/us-states"
 
 // Only causes the web app knows about are usable in matching; ignore any others.
 const uiCauseIds = new Set<string>(uiCauses.map((c) => c.id))
@@ -104,15 +105,19 @@ function toDetail(c: DetailRow): CharityDetail {
 
   // The most recent fiscal year stands in for the annual budget.
   const latest = financials[0]
-  const place = [c.location_city, c.location_region].filter(Boolean).join(", ")
+  // Records store states either spelled out ("Ohio") or as codes ("OH", from
+  // IRS data). Match on the code; show the full name.
+  const region = stateCode(c.location_region)
+  const regionLabel = region ? (stateName[region] ?? region) : null
+  const place = [c.location_city, regionLabel].filter(Boolean).join(", ")
 
   return {
     id: c.id,
     name: c.name,
     description: c.description ?? "",
     causes: causeSlugs,
-    place: place || (c.location_region ?? ""),
-    region: c.location_region ?? undefined,
+    place,
+    region,
     annualBudgetUsd: latest?.totalExpenses ?? undefined,
     directPct: latest?.programRatio != null ? Math.round(latest.programRatio * 100) : undefined,
     transparencyScore: c.transparency_score != null ? Number(c.transparency_score) : undefined,

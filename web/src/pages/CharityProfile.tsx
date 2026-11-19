@@ -6,6 +6,7 @@ import { FloatingDonate } from "@/components/FloatingDonate"
 import { PageBackdrop } from "@/components/Glass"
 import { glassChip, refract } from "@/lib/glass"
 import { SiteHeader } from "@/components/SiteHeader"
+import { stateName } from "@/data/us-states"
 import { causes } from "@/data/causes"
 import { NORTHSIDE_ID, northsideExtras, presetGifts } from "@/data/sample-charity"
 import { fetchCharityDetail, type CharityDetail, type CharityFinancials } from "@/lib/db"
@@ -741,7 +742,7 @@ function WhyMatched({ charity, params, hasPrefs }: { charity: CharityDetail; par
     })
   }
   if (prefs.region) {
-    rows.push({ label: "Where", yours: prefs.region, theirs: charity.place || "Not listed", met: charity.region === prefs.region })
+    rows.push({ label: "Where", yours: stateName[prefs.region] ?? prefs.region, theirs: charity.place || "Not listed", met: charity.region === prefs.region })
   }
   if (prefs.preferSmall) {
     rows.push({
