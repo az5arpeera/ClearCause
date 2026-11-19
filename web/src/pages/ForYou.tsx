@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react"
 import { ArrowRight, Compass, PencilLine, SlidersHorizontal } from "lucide-react"
 
 import { CharityRow } from "@/components/CharityRow"
+import { Bone, CharityRowSkeleton } from "@/components/Skeleton"
 import { PageFrame } from "@/components/Glass"
-import { glassChip, glassPanel, refract, solidButton } from "@/lib/glass"
+import { enterFade, glassChip, glassPanel, refract, solidButton } from "@/lib/glass"
 import { causes } from "@/data/causes"
 import { stateName } from "@/data/us-states"
 import { useAuth } from "@/lib/auth"
@@ -87,9 +88,15 @@ export default function ForYou() {
           {error ? (
             <p className="border-t border-rule pt-5 text-ink-2">The charity list didn't load ({error}). Refresh to try again.</p>
           ) : !suggestions ? (
-            <p className="border-t border-rule pt-5 text-ink-2">Ranking charities…</p>
+            <section className="mb-10">
+              <div className="flex items-baseline justify-between gap-2 border-b border-ink pb-2">
+                <Bone className="h-6 w-28" />
+                <Bone className="h-4 w-56" />
+              </div>
+              <CharityRowSkeleton count={3} label="Ranking charities" />
+            </section>
           ) : (
-            <>
+            <div className={enterFade}>
               <Group
                 title={yourCauses ? "Best fits" : "Top suggestions"}
                 note={yourCauses ? "Share at least one of your causes." : "Ranked by transparency and share to programs. Pick causes for a closer fit."}
@@ -111,7 +118,7 @@ export default function ForYou() {
                   <ArrowRight className="size-4" aria-hidden />
                 </a>
               </div>
-            </>
+            </div>
           )}
         </section>
       </div>

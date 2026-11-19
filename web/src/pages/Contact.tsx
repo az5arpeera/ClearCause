@@ -3,7 +3,7 @@ import { CheckCircle2, Send } from "lucide-react"
 
 import { PageFrame } from "@/components/Glass"
 import { useAuth } from "@/lib/auth"
-import { glassChip, glassPanel, solidButton } from "@/lib/glass"
+import { fieldInput, glassChip, glassPanel, solidButton } from "@/lib/glass"
 import { useLiquidGlass } from "@/lib/liquid-glass"
 import { displayNameFor, useProfile } from "@/lib/profile"
 import { supabase } from "@/lib/supabase"
@@ -17,7 +17,7 @@ const topics: [string, string][] = [
   ["other", "Something else"],
 ]
 
-const field = "mt-2 block min-h-11 w-full rounded-[12px] border border-input bg-paper px-3 text-sm"
+const field = `${fieldInput} mt-2`
 
 /** Contact form: saves to the contact_messages table (insert-only for the public). */
 export default function Contact() {

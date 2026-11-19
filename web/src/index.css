@@ -56,6 +56,8 @@
 }
 
 :root {
+  /* One strong ease-out for every press and entrance. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   /* Ground: warm paper, like an annual report's uncoated stock */
   --paper: oklch(0.972 0.013 84);
   --paper-sunk: oklch(0.944 0.018 84);
@@ -209,6 +211,11 @@
     --lg-shadow: 0 10px 30px color-mix(in oklch, var(--ink) 18%, transparent), 0 1px 3px color-mix(in oklch, var(--ink) 12%, transparent);
     background-color: var(--lg-fill);
     color: var(--paper);
+  }
+  /* Keyboard focus inside the forest bar: a forest ring on forest glass
+     disappears, so controls in it get a paper ring instead. */
+  .lg-forest :focus-visible {
+    outline-color: var(--paper);
   }
 
   /* Paper glass: the dashboard filter chips. Ink labels. */
@@ -371,13 +378,15 @@
     transition:
       background-color 160ms ease-out,
       box-shadow 160ms ease-out,
-      color 160ms ease-out;
+      color 160ms ease-out,
+      scale 160ms var(--ease-out);
   }
   .nav-bubble:hover {
     background-color: color-mix(in oklch, var(--paper) 17%, transparent);
   }
   .nav-bubble:active {
     background-color: color-mix(in oklch, var(--paper) 24%, transparent);
+    scale: 0.97;
   }
   .nav-bubble[aria-current="page"] {
     background-color: color-mix(in oklch, var(--paper) 22%, transparent);
