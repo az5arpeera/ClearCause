@@ -405,7 +405,7 @@ function Donut({
     <div className="border-t-2 border-forest bg-paper-sunk px-5 pt-4 pb-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-bold tracking-tight">{BANDS[metric].title}</h2>
-        <div role="tablist" aria-label="Chart metric" className="flex gap-1">
+        <div role="tablist" aria-label="Chart metric" className="flex flex-wrap gap-1.5">
           {METRICS.map((m) => (
             <button
               key={m}
