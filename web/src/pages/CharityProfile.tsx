@@ -913,6 +913,7 @@ function sourceLabel(url: string) {
   try {
     const u = new URL(url)
     if (u.hostname.endsWith("propublica.org")) return "IRS Form 990 via ProPublica Nonprofit Explorer"
+    if (u.hostname === "apps.irs.gov") return "IRS Form 990 (IRS e-file data)"
     const file = decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() ?? u.hostname)
     const page = u.hash.match(/page=(\d+)/)?.[1]
     return `${file}${page ? `, page ${page}` : ""}`

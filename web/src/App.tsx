@@ -4,6 +4,7 @@ import CharityProfile from '@/pages/CharityProfile'
 import { NORTHSIDE_ID } from '@/data/sample-charity'
 import Landing from '@/pages/Landing'
 import About from '@/pages/About'
+import AdminReview from '@/pages/AdminReview'
 import Contact from '@/pages/Contact'
 import Explore from '@/pages/Explore'
 import ForYou from '@/pages/ForYou'
@@ -24,6 +25,7 @@ function App() {
     ['/about', { title: 'About · Clear Cause', page: <About /> }],
     ['/contact', { title: 'Contact · Clear Cause', page: <Contact /> }],
     ['/profile', { title: 'Your profile · Clear Cause', page: <Profile /> }],
+    ['/admin/review', { title: 'Review charities · Clear Cause', page: <AdminReview /> }],
     ['/signin', { title: 'Sign in · Clear Cause', page: <SignIn /> }],
     ['/partners', { title: 'Become a partner · Clear Cause', page: <Placeholder kind="partners" /> }],
   ])

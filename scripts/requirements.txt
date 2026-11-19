@@ -1,3 +1,4 @@
 pypdf[crypto]>=6.19.0,<7
 pypdfium2>=5,<6
 Pillow>=12,<13
+inflate64>=1.0,<2

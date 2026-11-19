@@ -169,6 +169,56 @@ export async function fetchCharityDetail(id: string): Promise<CharityDetail | nu
   return data ? toDetail(data as unknown as DetailRow) : null
 }
 
+/* ---------------------------------------------------------------- admin */
+
+let adminCache: { userId: string; result: Promise<boolean> } | null = null
+
+/** Whether the signed-in user is an admin (profiles.role). */
+export function fetchIsAdmin(userId: string): Promise<boolean> {
+  if (adminCache?.userId !== userId) {
+    adminCache = {
+      userId,
+      result: Promise.resolve(
+        supabase.from("profiles").select("role").eq("id", userId).maybeSingle(),
+      ).then(({ data }) => data?.role === "admin", () => false),
+    }
+  }
+  return adminCache.result
+}
+
+/**
+ * Charities waiting for review. Only admins can read these (RLS); for anyone
+ * else the list is simply empty.
+ */
+export async function fetchPendingCharities(offset = 0, limit = 25) {
+  const { data, error, count } = await supabase
+    .from("charities")
+    .select(detailSelect, { count: "exact" })
+    .eq("vetting_status", "pending")
+    .order("created_at", { ascending: true })
+    .range(offset, offset + limit - 1)
+  if (error) throw new Error(error.message)
+  return { charities: ((data ?? []) as unknown as DetailRow[]).map(toDetail), total: count ?? 0 }
+}
+
+/** Approve (vetted) or reject a charity. Admin-only under RLS. */
+export async function setVettingStatus(id: string, status: "vetted" | "rejected") {
+  const { error } = await supabase.from("charities").update({ vetting_status: status }).eq("id", id)
+  if (error) throw new Error(error.message)
+  vettedCache = null
+}
+
+/** Replace a charity's causes. Admin-only under RLS. */
+export async function setCharityCauses(id: string, slugs: CauseId[], causeRows: CauseRow[]) {
+  const ids = causeRows.filter((c) => (slugs as string[]).includes(c.slug)).map((c) => c.id)
+  const { error: delError } = await supabase.from("charity_causes").delete().eq("charity_id", id)
+  if (delError) throw new Error(delError.message)
+  if (ids.length) {
+    const { error } = await supabase.from("charity_causes").insert(ids.map((cause_id) => ({ charity_id: id, cause_id })))
+    if (error) throw new Error(error.message)
+  }
+}
+
 /** The signed-in donor's saved cause selections (slugs the app recognizes). */
 export async function loadCausePreferences(profileId: string): Promise<CauseId[]> {
   const { data, error } = await supabase

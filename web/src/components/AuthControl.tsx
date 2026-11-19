@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react"
-import { LogOut, UserRound } from "lucide-react"
+import { ClipboardCheck, LogOut, UserRound } from "lucide-react"
 
 import { Avatar } from "@/components/Avatar"
 
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth"
+import { fetchIsAdmin } from "@/lib/db"
 import { displayNameFor, useProfile } from "@/lib/profile"
 
 /**
@@ -16,6 +17,15 @@ import { displayNameFor, useProfile } from "@/lib/profile"
 export function AuthControl({ className }: { className?: string }) {
   const { user, loading, signOut } = useAuth()
   const profile = useProfile(user)
+  const [isAdmin, setIsAdmin] = useState(false)
+  useEffect(() => {
+    if (!user) return
+    let active = true
+    fetchIsAdmin(user.id).then((ok) => active && setIsAdmin(ok))
+    return () => {
+      active = false
+    }
+  }, [user])
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -93,6 +103,16 @@ export function AuthControl({ className }: { className?: string }) {
             <UserRound className="size-4" aria-hidden />
             Your profile
           </a>
+          {isAdmin ? (
+            <a
+              href="/admin/review"
+              role="menuitem"
+              className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-ink no-underline hover:bg-ink/5"
+            >
+              <ClipboardCheck className="size-4" aria-hidden />
+              Review charities
+            </a>
+          ) : null}
           <button
             type="button"
             role="menuitem"
