@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react"
 import { ArrowRight } from "lucide-react"
 
 import { PageFrame } from "@/components/Glass"
-import { glassPanel } from "@/lib/glass"
+import { glassPanel, solidButton } from "@/lib/glass"
 import { causes, type CauseId } from "@/data/causes"
 import { usStates } from "@/data/us-states"
 import { useAuth } from "@/lib/auth"
@@ -10,7 +10,6 @@ import { useLiquidGlass } from "@/lib/liquid-glass"
 import { readPreferences } from "@/lib/matching"
 import { readLocalPreferences, savePreferences, useSavedPreferences, type SavedPreferences } from "@/lib/preferences"
 
-const primaryAction = "inline-flex min-h-11 items-center gap-2 rounded-sm bg-forest px-5 text-sm font-semibold text-paper no-underline hover:bg-forest-deep"
 const sectionTitle = "text-lg font-bold tracking-tight"
 const stateCodes = usStates.map((s) => s.code)
 
@@ -130,7 +129,7 @@ export default function Quiz() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-5 border-t border-ink/10 pt-6">
-          <button type="submit" disabled={saving} className={primaryAction}>
+          <button type="submit" disabled={saving} className={solidButton}>
             {saving ? "Saving…" : editing ? "Save and see For You" : "See my suggestions"} <ArrowRight className="size-4" aria-hidden />
           </button>
           <a href={editing ? "/for-you" : "/explore"} className="text-sm font-medium text-forest underline">

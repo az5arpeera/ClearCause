@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react"
-import { LogOut } from "lucide-react"
+import { LogOut, UserRound } from "lucide-react"
+
+import { Avatar } from "@/components/Avatar"
 
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth"
+import { displayNameFor, useProfile } from "@/lib/profile"
 
 /**
  * Account control for the forest-deep page headers.
@@ -12,6 +15,7 @@ import { useAuth } from "@/lib/auth"
  */
 export function AuthControl({ className }: { className?: string }) {
   const { user, loading, signOut } = useAuth()
+  const profile = useProfile(user)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -46,9 +50,7 @@ export function AuthControl({ className }: { className?: string }) {
     )
   }
 
-  const name =
-    (user.user_metadata?.full_name as string | undefined) ?? user.email ?? "Account"
-  const initial = name.trim()[0]?.toUpperCase() ?? "?"
+  const name = profile ? displayNameFor(user, profile) : (user.email ?? "Account")
 
   async function onSignOut() {
     await signOut()
@@ -63,9 +65,9 @@ export function AuthControl({ className }: { className?: string }) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
-        className="grid size-8 place-items-center rounded-full border border-paper/40 bg-paper/10 text-sm font-semibold text-paper transition-colors hover:bg-paper/20"
+        className="grid size-9 place-items-center rounded-full ring-1 ring-paper/50 transition-[box-shadow] hover:ring-2 hover:ring-paper/80"
       >
-        {initial}
+        <Avatar name={name} url={profile?.avatarUrl ?? null} className="size-8 bg-paper/15 text-sm" />
       </button>
 
       {open && (
@@ -83,6 +85,14 @@ export function AuthControl({ className }: { className?: string }) {
               </p>
             )}
           </div>
+          <a
+            href="/profile"
+            role="menuitem"
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-ink no-underline hover:bg-ink/5"
+          >
+            <UserRound className="size-4" aria-hidden />
+            Your profile
+          </a>
           <button
             type="button"
             role="menuitem"

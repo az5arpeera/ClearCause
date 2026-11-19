@@ -3,10 +3,13 @@ import { useEffect } from 'react'
 import CharityProfile from '@/pages/CharityProfile'
 import { NORTHSIDE_ID } from '@/data/sample-charity'
 import Landing from '@/pages/Landing'
+import About from '@/pages/About'
+import Contact from '@/pages/Contact'
 import Explore from '@/pages/Explore'
 import ForYou from '@/pages/ForYou'
 import Quiz, { LegacyMatches } from '@/pages/Matching'
 import Placeholder from '@/pages/Placeholder'
+import Profile from '@/pages/Profile'
 import SignIn from '@/pages/SignIn'
 
 function App() {
@@ -18,8 +21,9 @@ function App() {
     ['/for-you', { title: 'For you · Clear Cause', page: <ForYou /> }],
     ['/quiz', { title: 'Giving preferences · Clear Cause', page: <Quiz /> }],
     ['/matches', { title: 'For you · Clear Cause', page: <LegacyMatches /> }],
-    ['/about', { title: 'About · Clear Cause', page: <Placeholder kind="about" /> }],
-    ['/contact', { title: 'Contact · Clear Cause', page: <Placeholder kind="contact" /> }],
+    ['/about', { title: 'About · Clear Cause', page: <About /> }],
+    ['/contact', { title: 'Contact · Clear Cause', page: <Contact /> }],
+    ['/profile', { title: 'Your profile · Clear Cause', page: <Profile /> }],
     ['/signin', { title: 'Sign in · Clear Cause', page: <SignIn /> }],
     ['/partners', { title: 'Become a partner · Clear Cause', page: <Placeholder kind="partners" /> }],
   ])

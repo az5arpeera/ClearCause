@@ -2,20 +2,15 @@ import { ArrowLeft } from "lucide-react"
 
 import { PageBackdrop } from "@/components/Glass"
 import { SiteHeader } from "@/components/SiteHeader"
-type Kind = "partners" | "missing" | "about" | "contact"
+import { SiteFooter } from "@/components/SiteFooter"
+import { cn } from "@/lib/utils"
+import { solidButton } from "@/lib/glass"
+type Kind = "partners" | "missing"
 
 const copy: Record<Kind, { title: string; body: string }> = {
   partners: {
     title: "Partner applications aren't open yet",
     body: "This is a design prototype. When applications open, small nonprofits will start here: apply, pass an independent audit, and get listed free.",
-  },
-  about: {
-    title: "About Clear Cause",
-    body: "Clear Cause shows where each dollar goes before you give it, using charities' own statements and IRS filings, with every figure cited. A fuller About page is on the way.",
-  },
-  contact: {
-    title: "Contact us",
-    body: "A contact form is coming soon. Until then, questions about a charity's figures are best answered by the sources linked on its profile.",
   },
   missing: {
     title: "There's nothing at this address",
@@ -36,13 +31,14 @@ export default function Placeholder({ kind }: { kind: Kind }) {
           <p className="mt-3 font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{body}</p>
           <a
             href="/"
-            className="mt-8 inline-flex h-11 items-center gap-2 rounded-[2px] bg-forest px-5 text-[0.9375rem] font-semibold text-paper no-underline hover:bg-forest-deep"
+            className={cn(solidButton, "mt-8")}
           >
             <ArrowLeft className="size-4" aria-hidden />
             Back to Clear Cause
           </a>
         </div>
       </main>
+      <SiteFooter />
     </div>
   )
 }
