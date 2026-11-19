@@ -4,7 +4,8 @@ import { ArrowRight, BadgeCheck, Check, CircleDashed, ExternalLink, Minus } from
 import { Button } from "@/components/ui/button"
 import { FloatingDonate } from "@/components/FloatingDonate"
 import { PageBackdrop } from "@/components/Glass"
-import { glassChip, refract, solidButton } from "@/lib/glass"
+import { choiceButton, choiceOff, choiceOn, enterFade, glassChip, refract, solidButton } from "@/lib/glass"
+import { Bone } from "@/components/Skeleton"
 import { SiteHeader } from "@/components/SiteHeader"
 import { stateName } from "@/data/us-states"
 import { causes } from "@/data/causes"
@@ -60,9 +61,7 @@ export default function CharityProfile({ id }: { id: string }) {
           {error}. Check your connection and try again.
         </StatePage>
       ) : charity === undefined ? (
-        <StatePage title="Loading charity…" busy>
-          Reading its record and financial statements.
-        </StatePage>
+        <ProfileSkeleton />
       ) : charity === null ? (
         <StatePage title="We couldn't find that charity">
           It may not be vetted yet, or the link may be wrong.
@@ -72,6 +71,37 @@ export default function CharityProfile({ id }: { id: string }) {
       )}
       {charity ? null : <SiteFooter />}
     </div>
+  )
+}
+
+/** The profile's shape while it loads, so the page doesn't jump when it arrives. */
+function ProfileSkeleton() {
+  return (
+    <main id="main" className="mx-auto max-w-[76rem] px-4 sm:px-6 lg:px-10" aria-busy>
+      <span role="status" className="sr-only">Loading charity…</span>
+      <div aria-hidden className="pt-6 pb-8 md:pt-8 md:pb-10 lg:pt-10">
+        <Bone className="h-4 w-40" />
+        <Bone className="mt-4 h-10 w-[28rem] max-w-[85%]" />
+        <Bone className="mt-3 h-4 w-64 max-w-[70%]" />
+        <Bone className="mt-5 h-4 w-[26rem] max-w-full" />
+        <Bone className="mt-2 h-4 w-80 max-w-[75%]" />
+        <div className="mt-8 flex gap-2">
+          {[36, 32, 44, 24].map((w) => (
+            <Bone key={w} className="h-10 rounded-[12px]" style={{ width: `${w * 0.25}rem` }} />
+          ))}
+        </div>
+      </div>
+      <div aria-hidden className="grid gap-x-12 lg:grid-cols-[minmax(0,1fr)_21rem] xl:gap-x-16">
+        <div className="border-t-2 border-rule pt-4">
+          <Bone className="h-8 w-[30rem] max-w-full" />
+          <Bone className="mt-3 h-8 w-80 max-w-[80%]" />
+          <Bone className="mt-6 h-6 w-full" />
+          <Bone className="mt-6 h-4 w-full" />
+          <Bone className="mt-3 h-4 w-full" />
+        </div>
+        <Bone className="mt-10 h-72 rounded-[12px] lg:mt-0" />
+      </div>
+    </main>
   )
 }
 
@@ -111,7 +141,7 @@ function Profile({ charity }: { charity: CharityDetail }) {
   return (
     <>
       {sample ? <SampleNotice name={charity.name} /> : null}
-      <main id="main" className="mx-auto max-w-[76rem] px-4 sm:px-6 lg:px-10">
+      <main id="main" className={cn("mx-auto max-w-[76rem] px-4 sm:px-6 lg:px-10", enterFade)}>
         <ProfileHeader charity={charity} hasPrefs={hasPrefs} hasPrograms={Boolean(extras)} />
 
         <div className="grid gap-x-12 lg:grid-cols-[minmax(0,1fr)_21rem] xl:gap-x-16">
@@ -444,12 +474,7 @@ function GiftComposer({
                   setError(null)
                   setSubmitted(false)
                 }}
-                className={cn(
-                  "figures h-10 rounded-[2px] border text-[0.9375rem] font-semibold transition-colors",
-                  active
-                    ? "border-forest bg-forest text-paper"
-                    : "border-input bg-paper text-ink hover:border-forest hover:text-forest-deep",
-                )}
+                className={cn(choiceButton, "figures px-0 text-[0.9375rem]", active ? choiceOn : choiceOff)}
               >
                 ${g}
               </button>
@@ -461,7 +486,7 @@ function GiftComposer({
         </label>
         <div
           className={cn(
-            "mt-1.5 flex h-10 items-center rounded-[2px] border bg-paper px-3 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-forest",
+            "mt-1.5 flex h-10 items-center rounded-[12px] border bg-paper px-3 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-forest",
             error ? "border-destructive" : "border-input",
           )}
         >
@@ -537,7 +562,7 @@ function GiftComposer({
       <Button
         type="submit"
         disabled={Boolean(error)}
-        className="mt-5 h-11 w-full rounded-[2px] text-[0.9375rem] font-semibold hover:bg-forest-deep"
+        className="mt-5 h-11 w-full rounded-[12px] text-[0.9375rem] font-semibold transition-[background-color,scale] duration-150 ease-(--ease-out) hover:bg-forest-deep active:scale-[0.97]"
       >
         Continue to give {exact.format(amount).replace(".00", "")}
       </Button>

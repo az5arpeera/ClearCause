@@ -10,6 +10,15 @@ import { SiteFooter } from "@/components/SiteFooter"
  * landing hero. `band` sits behind the header and page intro; `full` covers
  * the whole page for short form pages (quiz, sign in).
  */
+/**
+ * The band fades out on an eased curve. A straight-line fade that stops at
+ * flat paper leaves a visible crease (a Mach band) where it ends; easing the
+ * last stretch towards zero hides the join.
+ */
+const bandFade =
+  "linear-gradient(to bottom, #000 0%, #000 45%, rgb(0 0 0 / 0.9) 58%, rgb(0 0 0 / 0.7) 68%, " +
+  "rgb(0 0 0 / 0.45) 78%, rgb(0 0 0 / 0.22) 87%, rgb(0 0 0 / 0.07) 94%, transparent 100%)"
+
 export function PageBackdrop({ size = "band" }: { size?: "band" | "full" }) {
   const p = photos.backdrop
   return (
@@ -20,6 +29,7 @@ export function PageBackdrop({ size = "band" }: { size?: "band" | "full" }) {
         "pointer-events-none overflow-hidden",
         size === "full" ? "fixed inset-0 -z-10" : "absolute inset-x-0 top-0 -z-10 h-[30rem] sm:h-[26rem]",
       )}
+      style={size === "band" ? { maskImage: bandFade, WebkitMaskImage: bandFade } : undefined}
     >
       <img
         src={photoUrl(p.src, 2400, 1400)}
@@ -27,7 +37,6 @@ export function PageBackdrop({ size = "band" }: { size?: "band" | "full" }) {
         className="absolute inset-0 size-full scale-110 object-cover object-[30%_40%] blur-[7px] saturate-[0.85]"
       />
       <div className="absolute inset-0 bg-paper/[0.7]" />
-      {size === "band" ? <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-paper" /> : null}
     </div>
   )
 }

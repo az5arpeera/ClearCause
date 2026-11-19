@@ -77,7 +77,7 @@ export default function SignIn() {
           </p>
 
           {checkEmail ? (
-            <div className="mt-8 rounded-[2px] border border-forest/30 bg-forest/5 p-5">
+            <div className="mt-8 rounded-[12px] border border-forest/30 bg-forest/5 p-5">
               <p className="font-serif text-[1rem] leading-[1.6] text-ink">
                 Check your inbox — we sent a confirmation link to{" "}
                 <span className="font-semibold">{email}</span>. Confirm it, then sign in.
@@ -89,7 +89,7 @@ export default function SignIn() {
                 type="button"
                 onClick={onGoogle}
                 disabled={busy}
-                className="mt-8 inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-[2px] border border-ink/15 bg-paper px-5 text-[0.9375rem] font-semibold text-ink hover:bg-ink/5 disabled:opacity-50"
+                className="mt-8 inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-[12px] border border-input bg-paper px-5 text-[0.9375rem] font-semibold text-ink transition-[background-color,scale] duration-150 ease-(--ease-out) hover:bg-ink/5 active:scale-[0.97] disabled:opacity-50"
               >
                 <GoogleGlyph />
                 Continue with Google
@@ -110,7 +110,7 @@ export default function SignIn() {
                     autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-11 rounded-[2px] border border-ink/15 bg-paper px-3 text-[0.9375rem] outline-none focus:border-forest focus:ring-2 focus:ring-forest/20"
+                    className="min-h-11 rounded-[12px] border border-input bg-paper px-3 text-[0.9375rem] outline-none transition-[border-color,box-shadow] duration-150 hover:border-ink/40 focus:border-forest focus:ring-2 focus:ring-forest/20"
                   />
                 </label>
                 <label className="flex flex-col gap-1.5">
@@ -122,7 +122,7 @@ export default function SignIn() {
                     autoComplete={mode === "signin" ? "current-password" : "new-password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-11 rounded-[2px] border border-ink/15 bg-paper px-3 text-[0.9375rem] outline-none focus:border-forest focus:ring-2 focus:ring-forest/20"
+                    className="min-h-11 rounded-[12px] border border-input bg-paper px-3 text-[0.9375rem] outline-none transition-[border-color,box-shadow] duration-150 hover:border-ink/40 focus:border-forest focus:ring-2 focus:ring-forest/20"
                   />
                 </label>
 
@@ -137,7 +137,7 @@ export default function SignIn() {
                       value={confirm}
                       onChange={(e) => setConfirm(e.target.value)}
                       aria-invalid={confirm.length > 0 && confirm !== password}
-                      className="h-11 rounded-[2px] border border-ink/15 bg-paper px-3 text-[0.9375rem] outline-none focus:border-forest focus:ring-2 focus:ring-forest/20 aria-[invalid=true]:border-red-500"
+                      className="min-h-11 rounded-[12px] border border-input bg-paper px-3 text-[0.9375rem] outline-none transition-[border-color,box-shadow] duration-150 hover:border-ink/40 focus:border-forest focus:ring-2 focus:ring-forest/20 aria-[invalid=true]:border-red-500"
                     />
                   </label>
                 )}

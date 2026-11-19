@@ -4,10 +4,11 @@ import type { User } from "@supabase/supabase-js"
 
 import { Avatar } from "@/components/Avatar"
 import { PageFrame } from "@/components/Glass"
+import { Bone, RowsSkeleton } from "@/components/Skeleton"
 import { causes } from "@/data/causes"
 import { stateName } from "@/data/us-states"
 import { useAuth } from "@/lib/auth"
-import { glassChip, glassPanel, solidButton } from "@/lib/glass"
+import { enterFade, fieldInput, glassChip, glassPanel, solidButton } from "@/lib/glass"
 import { useLiquidGlass } from "@/lib/liquid-glass"
 import { answerRows, useSavedPreferences, type SavedPreferences } from "@/lib/preferences"
 import {
@@ -38,7 +39,14 @@ export default function Profile() {
   if (loading) {
     return (
       <PageFrame title="Your profile">
-        <p className="mt-6 text-ink-2">One moment.</p>
+        <span role="status" className="sr-only">Loading your profile…</span>
+        <div aria-hidden className="mt-10 grid items-start gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+          <Bone className="h-64 rounded-[12px]" />
+          <div className="grid gap-6">
+            <Bone className="h-48 rounded-[12px]" />
+            <Bone className="h-56 rounded-[12px]" />
+          </div>
+        </div>
       </PageFrame>
     )
   }
@@ -48,7 +56,7 @@ export default function Profile() {
       title="Your profile"
       intro={user ? "Your photo and name, your giving answers, and how you'll pay." : "Sign in to keep a profile. Your quiz answers are already saved in this browser."}
     >
-      <div className="mt-10 grid items-start gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+      <div className={cn("mt-10 grid items-start gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]", enterFade)}>
         {user && profile ? <AccountCard user={user} profile={profile} /> : <GuestCard />}
         <div className="grid gap-6">
           <AnswersCard prefs={ready ? prefs : null} loading={!ready} />
@@ -145,7 +153,7 @@ function AccountCard({ user, profile }: { user: User; profile: ProfileData }) {
               maxLength={80}
               autoComplete="name"
               autoFocus
-              className="mt-2 block min-h-11 w-full rounded-[12px] border border-input bg-paper px-3 text-sm"
+              className={cn(fieldInput, "mt-2")}
             />
             <div className="mt-3 flex gap-2">
               <button type="submit" disabled={busy !== null} className={solidButton}>
@@ -216,7 +224,7 @@ function AnswersCard({ prefs, loading }: { prefs: SavedPreferences | null; loadi
         ) : null}
       </div>
       {loading ? (
-        <p className="mt-3 text-ink-2">Loading your answers…</p>
+        <RowsSkeleton rows={4} />
       ) : prefs ? (
         <>
           <dl className="mt-3 grid text-sm sm:grid-cols-2 sm:gap-x-8">

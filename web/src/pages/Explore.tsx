@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { Sparkles, SlidersHorizontal, X } from "lucide-react"
 
 import { CharityRow } from "@/components/CharityRow"
+import { CharityRowSkeleton } from "@/components/Skeleton"
 import { PageFrame } from "@/components/Glass"
-import { glassChip, glassPanel, refract } from "@/lib/glass"
+import { enterFade, fieldInput, glassChip, glassPanel, refract } from "@/lib/glass"
 import { causes, type CauseId } from "@/data/causes"
 import { stateName } from "@/data/us-states"
 import { fetchVettedCharityDetails, type CharityDetail } from "@/lib/db"
@@ -183,6 +184,7 @@ export default function Explore() {
               set={set}
               toggleBand={toggleBand}
               clear={() => setF({ ...empty, sort: f.sort })}
+              loading={!list}
             />
 
             <section aria-labelledby="results-title">
@@ -217,7 +219,9 @@ export default function Explore() {
 
               <ActiveFilters f={f} set={set} toggleBand={toggleBand} />
 
-              {list && results.length === 0 ? (
+              {!list ? (
+                <CharityRowSkeleton count={4} />
+              ) : results.length === 0 ? (
                 <div className="border-b border-rule py-8">
                   <p className="text-ink-2">No charities match these filters.</p>
                   <button type="button" onClick={() => setF({ ...empty, sort: f.sort })} className="mt-3 text-sm font-semibold text-forest underline">
@@ -225,15 +229,15 @@ export default function Explore() {
                   </button>
                 </div>
               ) : (
-                <ol aria-label="Charities">
+                <ol aria-label="Charities" className={enterFade}>
                   {results.map((c) => (
                     <CharityRow key={c.id} charity={c} />
                   ))}
                 </ol>
               )}
               <p className="mt-6 text-[0.8125rem] text-ink-3">
-                Charity figures come from the charity's own statements or from IRS Form 990 data via ProPublica's Nonprofit
-                Explorer, cited on each profile.
+                Charity figures come from the charity's own statements or from IRS Form 990 filings, cited on each
+                profile.
               </p>
             </section>
           </div>
@@ -252,6 +256,7 @@ function FiltersPanel({
   set,
   toggleBand,
   clear,
+  loading,
 }: {
   f: Filters
   all: CharityDetail[]
@@ -260,7 +265,10 @@ function FiltersPanel({
   set: (p: Partial<Filters>) => void
   toggleBand: (m: Metric, id: string) => void
   clear: () => void
+  loading: boolean
 }) {
+  // Counts stay blank until the list loads, rather than flashing 0.
+  const count = (n: number) => (loading ? "" : n)
   const causeFacet = applyFilters(all, f, "causes")
   const stateFacet = applyFilters(all, f, "state")
   const body = (
@@ -273,7 +281,7 @@ function FiltersPanel({
           value={f.q}
           onChange={(e) => set({ q: e.target.value })}
           placeholder="Name, town or keyword"
-          className="mt-2 block min-h-11 w-full rounded-[2px] border border-input bg-paper px-3 text-sm placeholder:text-ink-3"
+          className={cn(fieldInput, "mt-2")}
         />
       </div>
 
@@ -290,7 +298,7 @@ function FiltersPanel({
                 className="size-4 accent-forest"
               />
               <span className="flex-1">{c.label}</span>
-              <span className="figures text-ink-3">{n}</span>
+              <span className="figures text-ink-3">{count(n)}</span>
             </label>
           )
         })}
@@ -302,9 +310,9 @@ function FiltersPanel({
           id="explore-state"
           value={f.state}
           onChange={(e) => set({ state: e.target.value })}
-          className="mt-2 block min-h-11 w-full rounded-[2px] border border-input bg-paper px-3 text-sm"
+          className={cn(fieldInput, "mt-2")}
         >
-          <option value="">Anywhere ({stateFacet.length})</option>
+          <option value="">Anywhere{loading ? "" : ` (${stateFacet.length})`}</option>
           {states.map((s) => (
             <option key={s} value={s}>
               {stateName[s] ?? s} ({stateFacet.filter((c) => c.region === s).length})
@@ -323,7 +331,7 @@ function FiltersPanel({
                 <input type="radio" name={`band-${m}`} checked={on} onChange={() => toggleBand(m, b.id)} onClick={() => on && toggleBand(m, b.id)} className="size-4 accent-forest" />
                 <span aria-hidden className="size-3 shrink-0" style={{ background: b.color }} />
                 <span className="flex-1">{b.label}</span>
-                <span className="figures text-ink-3">{n}</span>
+                <span className="figures text-ink-3">{count(n)}</span>
               </label>
             )
           })}
@@ -467,7 +475,7 @@ function Donut({
                   onFocus={() => setHover(s.id)}
                   onBlur={() => setHover(null)}
                   className={cn(
-                    "flex min-h-10 w-full items-center gap-3 border-b border-rule px-1 text-left disabled:cursor-default disabled:text-ink-3",
+                    "flex min-h-10 w-full items-center gap-3 border-b border-rule px-1 text-left transition-[background-color] duration-150 ease-(--ease-out) hover:bg-ink/[0.04] active:bg-ink/[0.08] disabled:cursor-default disabled:text-ink-3 disabled:hover:bg-transparent",
                     on && "font-semibold",
                   )}
                 >

@@ -21,7 +21,7 @@ import {
 } from "@/data/sample-landing"
 import { causes } from "@/data/causes"
 import { SiteFooter } from "@/components/SiteFooter"
-import { solidButton } from "@/lib/glass"
+import { choiceButton, choiceOff, choiceOn, solidButton } from "@/lib/glass"
 
 const whole = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
 const exact = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 })
@@ -363,12 +363,7 @@ function CausePicker({ className }: { className?: string }) {
                 type="button"
                 aria-pressed={on}
                 onClick={() => toggle(c.id)}
-                className={cn(
-                  "inline-flex h-11 items-center gap-1.5 rounded-[2px] border px-3.5 text-[0.9375rem] font-medium transition-colors sm:h-10",
-                  on
-                    ? "border-forest bg-forest text-paper"
-                    : "border-input bg-paper text-ink hover:border-forest hover:text-forest-deep",
-                )}
+                className={cn(choiceButton, "min-h-11 text-[0.9375rem] font-medium sm:min-h-10", on ? choiceOn : choiceOff)}
               >
                 {on ? <Check className="size-3.5" strokeWidth={2.5} aria-hidden /> : null}
                 {c.label}

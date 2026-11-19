@@ -2,13 +2,14 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react"
 import { ArrowRight } from "lucide-react"
 
 import { PageFrame } from "@/components/Glass"
-import { glassPanel, solidButton } from "@/lib/glass"
+import { fieldInput, glassPanel, solidButton } from "@/lib/glass"
 import { causes, type CauseId } from "@/data/causes"
 import { usStates } from "@/data/us-states"
 import { useAuth } from "@/lib/auth"
 import { useLiquidGlass } from "@/lib/liquid-glass"
 import { readPreferences } from "@/lib/matching"
 import { readLocalPreferences, savePreferences, useSavedPreferences, type SavedPreferences } from "@/lib/preferences"
+import { cn } from "@/lib/utils"
 
 const sectionTitle = "text-lg font-bold tracking-tight"
 const stateCodes = usStates.map((s) => s.code)
@@ -89,7 +90,7 @@ export default function Quiz() {
         <div className="border-t border-ink/10 pt-6">
           <label htmlFor="giving-region" className={sectionTitle}>Where would you like to give?</label>
           <p id="giving-region-hint" className="mt-1 text-sm text-ink-2">Charities based in your state come first. Choose Anywhere for no preference.</p>
-          <select id="giving-region" name="region" defaultValue={initial.region} aria-describedby="giving-region-hint" className="mt-3 block min-h-11 w-full rounded-sm border border-input bg-paper px-3 text-sm sm:max-w-xs">
+          <select id="giving-region" name="region" defaultValue={initial.region} aria-describedby="giving-region-hint" className={cn(fieldInput, "mt-3  sm:max-w-xs")}>
             <option value="">Anywhere</option>
             {usStates.map((s) => (
               <option key={s.code} value={s.code}>{s.name}</option>
@@ -108,12 +109,12 @@ export default function Quiz() {
           <p className="mt-1 text-sm text-ink-2">A typical gift amount. Optional.</p>
           <div className="mt-3 flex items-center gap-2">
             <span className="text-sm text-ink-2" aria-hidden>$</span>
-            <input id="giving-budget" name="budget" type="number" min="0" step="1" inputMode="numeric" defaultValue={initial.givingBudget ?? ""} placeholder="50" className="block min-h-11 w-full rounded-sm border border-input bg-paper px-3 text-sm sm:max-w-[10rem]" />
+            <input id="giving-budget" name="budget" type="number" min="0" step="1" inputMode="numeric" defaultValue={initial.givingBudget ?? ""} placeholder="50" className={cn(fieldInput, "sm:max-w-[10rem]")} />
           </div>
         </div>
         <div className="border-t border-ink/10 pt-6">
           <label htmlFor="giving-frequency" className={sectionTitle}>How often do you plan to give?</label>
-          <select id="giving-frequency" name="frequency" defaultValue={initial.frequency ?? ""} className="mt-3 block min-h-11 w-full rounded-sm border border-input bg-paper px-3 text-sm sm:max-w-xs">
+          <select id="giving-frequency" name="frequency" defaultValue={initial.frequency ?? ""} className={cn(fieldInput, "mt-3  sm:max-w-xs")}>
             <option value="">No preference</option>
             <option value="one_time">One time</option>
             <option value="monthly">Monthly</option>
@@ -124,7 +125,7 @@ export default function Quiz() {
           <label htmlFor="giving-direct" className={sectionTitle}>Minimum that should reach the cause</label>
           <p id="giving-direct-hint" className="mt-1 text-sm text-ink-2">The share of spending that goes to programs rather than overhead. Charities below it move down the list. Leave blank for no minimum.</p>
           <div className="mt-3 flex items-center gap-2">
-            <input id="giving-direct" name="direct" type="number" min="0" max="100" step="1" inputMode="numeric" defaultValue={initial.directPctMin > 0 ? initial.directPctMin : ""} placeholder="80" aria-describedby="giving-direct-hint" className="block min-h-11 w-24 rounded-sm border border-input bg-paper px-3 text-sm" />
+            <input id="giving-direct" name="direct" type="number" min="0" max="100" step="1" inputMode="numeric" defaultValue={initial.directPctMin > 0 ? initial.directPctMin : ""} placeholder="80" aria-describedby="giving-direct-hint" className={cn(fieldInput, "w-24")} />
             <span className="text-sm text-ink-2" aria-hidden>%</span>
           </div>
         </div>
