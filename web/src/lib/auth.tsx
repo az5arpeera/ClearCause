@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 // Where OAuth and post-login land. Any SPA path works because the dev server
 // (and the vercel.json rewrite in prod) serve index.html for every path.
-const AFTER_LOGIN = '/matches'
+const AFTER_LOGIN = '/for-you'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)

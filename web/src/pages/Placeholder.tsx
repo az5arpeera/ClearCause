@@ -1,12 +1,21 @@
 import { ArrowLeft } from "lucide-react"
 
-import { Logo } from "@/components/Logo"
-type Kind = "partners" | "missing"
+import { PageBackdrop } from "@/components/Glass"
+import { SiteHeader } from "@/components/SiteHeader"
+type Kind = "partners" | "missing" | "about" | "contact"
 
 const copy: Record<Kind, { title: string; body: string }> = {
   partners: {
     title: "Partner applications aren't open yet",
     body: "This is a design prototype. When applications open, small nonprofits will start here: apply, pass an independent audit, and get listed free.",
+  },
+  about: {
+    title: "About Clear Cause",
+    body: "Clear Cause shows where each dollar goes before you give it, using charities' own statements and IRS filings, with every figure cited. A fuller About page is on the way.",
+  },
+  contact: {
+    title: "Contact us",
+    body: "A contact form is coming soon. Until then, questions about a charity's figures are best answered by the sources linked on its profile.",
   },
   missing: {
     title: "There's nothing at this address",
@@ -18,14 +27,11 @@ export default function Placeholder({ kind }: { kind: Kind }) {
   const { title, body } = copy[kind]
 
   return (
-    <div className="flex min-h-svh flex-col bg-paper text-ink">
-      <header className="sticky top-0 z-40 bg-forest-deep text-paper">
-        <div className="mx-auto flex h-16 max-w-none items-center px-4 sm:px-6 lg:px-10">
-          <Logo />
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-[76rem] flex-1 px-4 py-16 sm:px-6 lg:px-10 lg:py-24">
-        <div className="max-w-[40rem] border-t-2 border-forest pt-5">
+    <div className="relative isolate flex min-h-svh flex-col bg-paper text-ink">
+      <PageBackdrop size="full" />
+      <SiteHeader />
+      <main id="main" className="mx-auto w-full max-w-[76rem] flex-1 px-4 py-16 sm:px-6 lg:px-10 lg:py-24">
+        <div className="max-w-[40rem] lg lg-paper rounded-[12px] p-6 sm:p-8" data-refract="0.4" data-refract-source="#page-backdrop">
           <h1 className="text-[2rem] leading-tight font-bold tracking-[-0.02em] text-balance">{title}</h1>
           <p className="mt-3 font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{body}</p>
           <a

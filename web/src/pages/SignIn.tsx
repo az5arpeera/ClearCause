@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react"
 import { ArrowLeft } from "lucide-react"
 
-import { Logo } from "@/components/Logo"
+import { PageBackdrop } from "@/components/Glass"
+import { SiteHeader } from "@/components/SiteHeader"
 import { useAuth } from "@/lib/auth"
 
 type Mode = "signin" | "signup"
@@ -18,7 +19,7 @@ export default function SignIn() {
 
   // Already signed in → send them to their matches.
   if (user) {
-    window.location.replace("/matches")
+    window.location.replace("/for-you")
     return null
   }
 
@@ -42,7 +43,7 @@ export default function SignIn() {
       setCheckEmail(true)
       return
     }
-    window.location.assign("/matches")
+    window.location.assign("/for-you")
   }
 
   async function onGoogle() {
@@ -57,15 +58,12 @@ export default function SignIn() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col bg-paper text-ink">
-      <header className="sticky top-0 z-40 bg-forest-deep text-paper">
-        <div className="mx-auto flex h-16 max-w-none items-center px-4 sm:px-6 lg:px-10">
-          <Logo />
-        </div>
-      </header>
+    <div className="relative isolate flex min-h-svh flex-col bg-paper text-ink">
+      <PageBackdrop size="full" />
+      <SiteHeader />
 
-      <main className="mx-auto w-full max-w-[76rem] flex-1 px-4 py-16 sm:px-6 lg:px-10 lg:py-24">
-        <div className="max-w-[26rem] border-t-2 border-forest pt-5">
+      <main id="main" className="mx-auto w-full max-w-[76rem] flex-1 px-4 py-16 sm:px-6 lg:px-10 lg:py-24">
+        <div className="max-w-[26rem] lg lg-paper rounded-[12px] p-6 sm:p-8" data-refract="0.4" data-refract-source="#page-backdrop">
           <h1 className="text-[2rem] leading-tight font-bold tracking-[-0.02em] text-balance">
             {mode === "signin" ? "Sign in to Clear Cause" : "Create your account"}
           </h1>

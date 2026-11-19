@@ -1,157 +1,173 @@
-import { useId, useState, type FormEvent, type ReactNode } from "react"
-import { BadgeCheck, Check, CircleDashed } from "lucide-react"
+import { useEffect, useId, useMemo, useState, type FormEvent, type ReactNode } from "react"
+import { ArrowRight, BadgeCheck, Check, CircleDashed, ExternalLink, Minus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { AuthControl } from "@/components/AuthControl"
 import { FloatingDonate } from "@/components/FloatingDonate"
-import { Logo } from "@/components/Logo"
+import { PageBackdrop } from "@/components/Glass"
+import { glassChip, refract } from "@/lib/glass"
+import { SiteHeader } from "@/components/SiteHeader"
+import { causes } from "@/data/causes"
+import { NORTHSIDE_ID, northsideExtras, presetGifts } from "@/data/sample-charity"
+import { fetchCharityDetail, type CharityDetail, type CharityFinancials } from "@/lib/db"
 import { useLiquidGlass } from "@/lib/liquid-glass"
+import { rankCharities, readPreferences, smallBudgetUsd } from "@/lib/matching"
+import { preferencesQuery, readLocalPreferences } from "@/lib/preferences"
+import { compactUsd, count, exact, spendingParts, splitAmount, whole, type SpendPart } from "@/lib/money"
 import { cn } from "@/lib/utils"
-import {
-  audited,
-  charity,
-  disbursements,
-  expenses,
-  match,
-  presetGifts,
-  programs,
-  revenue,
-  selfReported,
-  type ProgramId,
-} from "@/data/sample-charity"
 
-const totalExpenses = expenses.programs + expenses.admin + expenses.fundraising
-const totalRevenue = revenue.reduce((sum, r) => sum + r.amount, 0)
-const programName = Object.fromEntries(programs.map((p) => [p.id, p.name])) as Record<ProgramId, string>
-
-const share = {
-  programs: expenses.programs / totalExpenses,
-  admin: expenses.admin / totalExpenses,
-  fundraising: expenses.fundraising / totalExpenses,
-}
-const cents = {
-  programs: Math.round(share.programs * 100),
-  admin: Math.round(share.admin * 100),
-  fundraising: 0,
-}
-cents.fundraising = 100 - cents.programs - cents.admin
-
-const whole = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
-const exact = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 })
-const count = new Intl.NumberFormat("en-US")
-const pct = (n: number) => `${(n * 100).toFixed(1)}%`
-
-/** Splits a gift in whole cents so the parts always add back to the total. */
-function splitGift(amount: number) {
-  const total = Math.round(amount * 100)
-  const admin = Math.round(total * share.admin)
-  const fundraising = Math.round(total * share.fundraising)
-  const toPrograms = total - admin - fundraising
-  let allotted = 0
-  const byProgram = programs.map((p, i) => {
-    const part =
-      i === programs.length - 1 ? toPrograms - allotted : Math.round((toPrograms * p.spending) / expenses.programs)
-    allotted += part
-    return { id: p.id, name: p.name, amount: part / 100 }
-  })
-  return { programs: toPrograms / 100, admin: admin / 100, fundraising: fundraising / 100, byProgram }
-}
-
+const causeLabel = Object.fromEntries(causes.map((c) => [c.id, c.label])) as Record<string, string>
 const HIDE_DONATE_WHILE = ["#give"]
 
-export default function CharityProfile() {
-  useLiquidGlass()
+/** Seeded demo charities use example.org addresses; real ones won't. */
+const isSampleCharity = (c: CharityDetail) => Boolean(c.websiteUrl?.includes(".example.org"))
+
+/** Charity names don't shorten reliably ("River Bend Reading Corps"), so copy uses the full name. */
+const shortName = (name: string) => name
+
+export default function CharityProfile({ id }: { id: string }) {
+  const [charity, setCharity] = useState<CharityDetail | null | undefined>(undefined)
+  useLiquidGlass(charity)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    fetchCharityDetail(id)
+      .then((c) => {
+        if (!active) return
+        setCharity(c)
+        if (c) document.title = `${c.name} · Clear Cause`
+      })
+      .catch((e: unknown) => active && setError(e instanceof Error ? e.message : "Could not load this charity"))
+    return () => {
+      active = false
+    }
+  }, [id])
+
   return (
-    <div className="min-h-svh bg-paper text-ink">
+    <div className="relative isolate min-h-svh overflow-x-clip bg-paper text-ink">
+      <PageBackdrop />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:bg-paper focus:px-3 focus:py-2"
       >
         Skip to content
       </a>
-      <Masthead />
-      <SampleNotice />
+      <SiteHeader />
+      {error ? (
+        <StatePage title="This profile didn't load">
+          {error}. Check your connection and try again.
+        </StatePage>
+      ) : charity === undefined ? (
+        <StatePage title="Loading charity…" busy>
+          Reading its record and financial statements.
+        </StatePage>
+      ) : charity === null ? (
+        <StatePage title="We couldn't find that charity">
+          It may not be vetted yet, or the link may be wrong.
+        </StatePage>
+      ) : (
+        <Profile charity={charity} />
+      )}
+    </div>
+  )
+}
 
+function StatePage({ title, children, busy }: { title: string; children: ReactNode; busy?: boolean }) {
+  return (
+    <main id="main" className="mx-auto max-w-[76rem] px-4 py-16 sm:px-6 lg:px-10 lg:py-24" aria-busy={busy || undefined}>
+      <div className="max-w-[40rem] border-t-2 border-forest pt-5">
+        <h1 className="text-[2rem] leading-tight font-bold tracking-[-0.02em]">{title}</h1>
+        <p className="mt-3 font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{children}</p>
+        {!busy ? (
+          <a href="/explore" className="mt-8 inline-flex h-11 items-center gap-2 rounded-[2px] bg-forest px-5 text-[0.9375rem] font-semibold text-paper no-underline hover:bg-forest-deep">
+            Browse charities
+            <ArrowRight className="size-4" aria-hidden />
+          </a>
+        ) : null}
+      </div>
+    </main>
+  )
+}
+
+const prefKeys = ["causes", "region", "size", "direct"]
+
+function Profile({ charity }: { charity: CharityDetail }) {
+  const latest = charity.financials[0]
+  const parts = latest ? spendingParts(latest) : null
+  const extras = charity.id === NORTHSIDE_ID ? northsideExtras : null
+  const sample = isSampleCharity(charity)
+  // Answers in the link win; otherwise use the donor's saved quiz answers.
+  const params = useMemo(() => {
+    const fromUrl = new URLSearchParams(window.location.search)
+    if (prefKeys.some((k) => fromUrl.has(k))) return fromUrl
+    const saved = readLocalPreferences()
+    return saved ? preferencesQuery(saved) : fromUrl
+  }, [])
+  const hasPrefs = prefKeys.some((k) => params.has(k))
+
+  return (
+    <>
+      {sample ? <SampleNotice name={charity.name} /> : null}
       <main id="main" className="mx-auto max-w-[76rem] px-4 sm:px-6 lg:px-10">
-        <ProfileHeader />
+        <ProfileHeader charity={charity} hasPrefs={hasPrefs} hasPrograms={Boolean(extras)} />
 
         <div className="grid gap-x-12 lg:grid-cols-[minmax(0,1fr)_21rem] xl:gap-x-16">
-          <Lead />
+          {latest && parts ? <Lead charity={charity} year={latest} parts={parts} /> : <NoFigures charity={charity} year={latest} />}
           <aside id="give" className="mt-10 scroll-mt-24 lg:sticky lg:top-24 lg:col-start-2 lg:row-span-6 lg:row-start-1 lg:mt-0 lg:self-start">
-            <GiftComposer />
+            <GiftComposer charity={charity} year={latest} parts={parts} sample={sample} />
           </aside>
-          <WhereTheMoneyWent />
-          <Audit />
-          <WhyMatched />
-          <Programs />
+          {latest && parts ? <WhereTheMoneyWent charity={charity} parts={parts} /> : null}
+          <WhyMatched charity={charity} params={params} hasPrefs={hasPrefs} />
+          <Sources charity={charity} sample={sample} />
+          {extras ? <Programs /> : null}
         </div>
       </main>
-
-      <Colophon />
-      <FloatingDonate href="#give" ariaLabel="Donate to Northside: jump to the gift form" hideWhile={HIDE_DONATE_WHILE} className="lg:hidden" />
-    </div>
+      <Colophon charity={charity} sample={sample} />
+      <FloatingDonate href="#give" ariaLabel={`Give to ${charity.name}: jump to the gift form`} hideWhile={HIDE_DONATE_WHILE} className="lg:hidden" />
+    </>
   )
 }
 
 /* ------------------------------------------------------------------ frame */
 
-function Masthead() {
-  const links = [
-    ["Matches", "/matches"],
-    ["Charities", "/"],
-    ["Your giving", "/matches"],
-  ]
-  return (
-    <header className="lg lg-forest lg-text sticky top-0 z-40" data-refract="0.8" data-refract-bezel="10">
-      <div className="mx-auto flex max-w-none flex-wrap items-center gap-x-8 px-4 sm:h-14 sm:flex-nowrap sm:px-6 lg:px-10">
-        <Logo className="h-14" />
-        <nav
-          aria-label="Primary"
-          className="order-last -mx-4 h-14 w-[calc(100%+2rem)] border-t border-paper/15 px-4 sm:order-none sm:mx-0 sm:h-full sm:w-auto sm:border-t-0 sm:px-0"
-        >
-          <ul className="flex h-full items-center gap-1.5">
-            {links.map(([label, href]) => (
-              <li key={label}>
-                <a
-                  href={href}
-                  aria-current={label === "Matches" ? "page" : undefined}
-                  className="nav-bubble"
-                >
-                  {label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <AuthControl className="ml-auto" />
-      </div>
-    </header>
-  )
-}
-
-function SampleNotice() {
+function SampleNotice({ name }: { name: string }) {
   return (
     <div className="border-b border-rule bg-paper-sunk">
       <p className="mx-auto max-w-[76rem] px-4 py-2 text-[0.8125rem] leading-snug text-ink-2 sm:px-6 lg:px-10">
-        <strong className="font-semibold text-ink">Sample profile.</strong> Northside Community Pantry, its suppliers
-        and every figure on this page are illustrative. No real organization is shown.
+        <strong className="font-semibold text-ink">Sample charity.</strong> {name} and its figures are seeded test data
+        in the Clear Cause database. No real organization is shown.
       </p>
     </div>
   )
 }
 
-function ProfileHeader() {
-  const contents = [
+function ProfileHeader({
+  charity,
+  hasPrefs,
+  hasPrograms,
+}: {
+  charity: CharityDetail
+  hasPrefs: boolean
+  hasPrograms: boolean
+}) {
+  const contents: [string, string][] = [
     ["Where the money went", "#money"],
-    ["Audit", "#audit"],
-    ["Why it matched you", "#match"],
-    ["Programs", "#programs"],
+    [hasPrefs ? "Why it matched you" : "How it fits you", "#match"],
+    ["Where the figures come from", "#sources"],
+    ...(hasPrograms ? ([["Programs", "#programs"]] as [string, string][]) : []),
   ]
+  const back = hasPrefs ? "/for-you" : "/explore"
+  const meta = [
+    charity.causes.map((c) => causeLabel[c]).join(", "),
+    charity.place,
+    charity.annualBudgetUsd != null ? `${compactUsd(charity.annualBudgetUsd)} a year` : null,
+  ].filter(Boolean)
+
   return (
     <header className="pt-6 pb-8 md:pt-8 md:pb-10 lg:pt-10">
       <nav aria-label="Breadcrumb" className="text-sm text-ink-2">
-        <a href="/matches" className="underline decoration-rule hover:decoration-ink-2">
-          Your matches
+        <a href={back} className="underline decoration-rule hover:decoration-ink-2">
+          {hasPrefs ? "For you" : "Explore"}
         </a>
         <span aria-hidden className="px-2 text-ink-3">
           /
@@ -165,25 +181,40 @@ function ProfileHeader() {
             {charity.name}
           </h1>
           <p className="mt-3 text-[0.9375rem] text-ink-2">
-            {charity.kind} <Dot /> {charity.place} <Dot /> Since {charity.founded} <Dot /> {charity.people}
+            {meta.map((m, i) => (
+              <span key={i}>
+                {i > 0 ? <Dot /> : null}
+                {m}
+              </span>
+            ))}
           </p>
         </div>
-        <div className="flex shrink-0 items-start gap-2.5 border-t-2 border-forest pt-3 md:min-w-60">
-          <BadgeCheck className="mt-0.5 size-5 text-forest" strokeWidth={1.75} aria-hidden />
-          <div className="text-sm leading-snug">
-            <p className="font-semibold text-forest-deep">{charity.partner.status}</p>
-            <p className="text-ink-2">Audited {charity.partner.auditedOn}</p>
+        <dl className="flex shrink-0 flex-col gap-2 border-t-2 border-forest pt-3 text-sm leading-snug md:min-w-60">
+          {charity.isPartner ? (
+            <div className="flex items-center gap-2.5">
+              <BadgeCheck className="size-5 text-forest" strokeWidth={1.75} aria-hidden />
+              <dt className="sr-only">Status</dt>
+              <dd className="font-semibold text-forest-deep">Vetted partner</dd>
+            </div>
+          ) : null}
+          <div className="figures flex items-baseline gap-2">
+            <dt className="text-ink-2">Transparency</dt>
+            <dd className="font-semibold">
+              {charity.transparencyScore != null ? `${charity.transparencyScore} / 100` : "Not scored yet"}
+            </dd>
           </div>
-        </div>
+        </dl>
       </div>
 
-      <p className="mt-6 hidden max-w-[62ch] font-serif text-[1.0625rem] leading-[1.6] text-ink-2 md:block">{charity.mission}</p>
+      {charity.description ? (
+        <p className="mt-6 max-w-[62ch] font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{charity.description}</p>
+      ) : null}
 
-      <nav aria-label="On this page" className="mt-8 border-y border-rule">
-        <ul className="-mx-3 flex overflow-x-auto text-sm font-medium whitespace-nowrap [scrollbar-width:none]">
+      <nav aria-label="On this page" className="mt-8">
+        <ul className="-mx-1 flex gap-2 overflow-x-auto px-1 py-1 whitespace-nowrap [scrollbar-width:none]">
           {contents.map(([label, href]) => (
             <li key={href}>
-              <a href={href} className="block px-3 py-2.5 text-ink-2 no-underline hover:text-forest hover:underline">
+              <a href={href} className={glassChip} {...refract}>
                 {label}
               </a>
             </li>
@@ -213,24 +244,20 @@ function SectionOpener({ id, title, children }: { id: string; title: string; chi
 
 /* ------------------------------------------------------------- the dollar */
 
-function Lead() {
-  const parts = [
-    { key: "programs", label: "Programs", cents: cents.programs, amount: expenses.programs, swatch: "bg-money" },
-    { key: "admin", label: "Management and admin", cents: cents.admin, amount: expenses.admin, swatch: "bg-admin" },
-    { key: "fundraising", label: "Fundraising", cents: cents.fundraising, amount: expenses.fundraising, swatch: "bg-fundraising" },
-  ] as const
-
+function Lead({ charity, year, parts }: { charity: CharityDetail; year: CharityFinancials; parts: SpendPart[] }) {
+  const programs = parts[0]
+  const description = parts.map((p) => `${p.cents} to ${p.label.toLowerCase()}`).join(", ")
   return (
     <section data-money aria-labelledby="lead-heading" className="lg:col-start-1">
       <h2 id="lead-heading" className="text-[1.625rem] leading-[1.2] font-semibold tracking-[-0.02em] text-balance sm:text-[2.125rem]">
-        Of every $1.00 Northside spent in fiscal 2025,{" "}
-        <span className="figures money-mark whitespace-nowrap">{cents.programs}¢</span> went straight to its programs.
+        Of every $1.00 {shortName(charity.name)} spent in fiscal {year.fiscalYear},{" "}
+        <span className="figures money-mark whitespace-nowrap">{programs.cents}¢</span> went straight to its programs.
       </h2>
 
       <figure className="mt-7">
         <div
           role="img"
-          aria-label={`A dollar as 100 cents: ${cents.programs} to programs, ${cents.admin} to management and admin, ${cents.fundraising} to fundraising.`}
+          aria-label={`A dollar as 100 cents: ${description}.`}
           className="grid grid-cols-[repeat(20,minmax(0,1fr))] gap-[3px] sm:grid-cols-[repeat(50,minmax(0,1fr))]"
         >
           {parts.flatMap((p) =>
@@ -240,7 +267,7 @@ function Lead() {
 
         <figcaption>
           <table className="figures mt-5 w-full text-[0.9375rem]">
-            <caption className="sr-only">Fiscal 2025 expenses by category</caption>
+            <caption className="sr-only">Fiscal {year.fiscalYear} expenses by category</caption>
             <tbody>
               {parts.map((p) => (
                 <tr key={p.key} className="border-b border-rule last:border-b-0">
@@ -256,25 +283,107 @@ function Lead() {
               ))}
             </tbody>
           </table>
+          {parts.some((p) => p.key === "overhead") ? (
+            <p className="mt-2 text-[0.8125rem] text-ink-3">
+              The statement on file gives program spending and the total, so admin and fundraising are shown together.
+            </p>
+          ) : null}
         </figcaption>
       </figure>
+    </section>
+  )
+}
 
-      <p className="mt-8 font-serif text-[1.0625rem] leading-[1.6] text-ink-2 md:hidden">{charity.mission}</p>
+function NoFigures({ charity, year }: { charity: CharityDetail; year?: CharityFinancials }) {
+  if (year && (year.totalExpenses != null || year.totalRevenue != null)) {
+    // A filing with totals only (IRS 990 extracts): show what it does say.
+    return (
+      <section aria-labelledby="lead-heading" className="lg:col-start-1">
+        <div className="border-t-2 border-forest pt-4">
+          <h2 id="lead-heading" className="text-[1.625rem] leading-tight font-semibold tracking-[-0.02em]">
+            {charity.name} in {year.fiscalYear}
+          </h2>
+          <dl data-money className="mt-5 grid max-w-[36rem] grid-cols-2 gap-x-8 border-y border-ink">
+            {year.totalRevenue != null ? (
+              <div className="py-4">
+                <dt className="text-sm text-ink-2">Took in</dt>
+                <dd className="figures mt-1 text-[2rem] leading-none font-bold">{whole.format(year.totalRevenue)}</dd>
+              </div>
+            ) : null}
+            {year.totalExpenses != null ? (
+              <div className="py-4">
+                <dt className="text-sm text-ink-2">Spent</dt>
+                <dd className="figures mt-1 text-[2rem] leading-none font-bold">{whole.format(year.totalExpenses)}</dd>
+              </div>
+            ) : null}
+          </dl>
+          <p className="mt-4 max-w-[62ch] font-serif text-[1.0625rem] leading-[1.6] text-ink-2">
+            The filing we have reports totals only, not how spending split between programs, management and fundraising.
+            Until we read the full return, {charity.name} ranks with a neutral efficiency score.
+          </p>
+          {year.sourceUrl ? (
+            <p className="mt-3 text-[0.8125rem] text-ink-3">
+              Source:{" "}
+              <a href={year.sourceUrl} className="underline" target="_blank" rel="noreferrer">
+                {sourceLabel(year.sourceUrl)}
+              </a>
+            </p>
+          ) : null}
+        </div>
+      </section>
+    )
+  }
+  return (
+    <section aria-labelledby="lead-heading" className="lg:col-start-1">
+      <div className="border-t-2 border-forest pt-4">
+        <h2 id="lead-heading" className="text-[1.625rem] leading-tight font-semibold tracking-[-0.02em]">
+          No financial statement on file yet
+        </h2>
+        <p className="mt-2 max-w-[62ch] font-serif text-[1.0625rem] leading-[1.6] text-ink-2">
+          We haven't read a statement for {charity.name} yet, so we can't show where its money goes. Its ranking uses a
+          neutral efficiency score until we do.
+        </p>
+      </div>
     </section>
   )
 }
 
 /* --------------------------------------------------------- gift composer */
 
-function GiftComposer() {
+function GiftComposer({
+  charity,
+  year,
+  parts,
+  sample,
+}: {
+  charity: CharityDetail
+  year: CharityFinancials | undefined
+  parts: SpendPart[] | null
+  sample: boolean
+}) {
   const [amount, setAmount] = useState(50)
   const [custom, setCustom] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const customId = useId()
   const errorId = useId()
+  const name = shortName(charity.name)
 
-  const split = splitGift(amount)
+  const split = parts ? splitAmount(amount, parts) : null
+  const programs = charity.id === NORTHSIDE_ID ? northsideExtras.programs : null
+  const programShare = split?.[0]?.amount ?? 0
+  const byProgram = programs && parts
+    ? (() => {
+        const total = programs.reduce((s, p) => s + p.spending, 0)
+        let allotted = 0
+        const cents = Math.round(programShare * 100)
+        return programs.map((p, i) => {
+          const part = i === programs.length - 1 ? cents - allotted : Math.round((cents * p.spending) / total)
+          allotted += part
+          return { id: p.id, name: p.name, amount: part / 100 }
+        })
+      })()
+    : null
 
   function chooseCustom(value: string) {
     setCustom(value)
@@ -290,7 +399,7 @@ function GiftComposer() {
       return
     }
     if (n > 100_000) {
-      setError("For gifts over $100,000, contact Northside directly.")
+      setError(`For gifts over $100,000, contact ${name} directly.`)
       return
     }
     setError(null)
@@ -305,7 +414,7 @@ function GiftComposer() {
   return (
     <form onSubmit={onSubmit} className="border-t-2 border-forest bg-paper-sunk px-5 pt-4 pb-5" aria-labelledby="give-heading">
       <h2 id="give-heading" className="text-lg font-bold tracking-[-0.01em]">
-        Give to Northside
+        Give to {name}
       </h2>
 
       <fieldset className="mt-4">
@@ -367,49 +476,52 @@ function GiftComposer() {
         ) : null}
       </fieldset>
 
-      <div className="mt-5" aria-live="polite">
-        <p className="text-sm text-ink-2">
-          How <span className="figures font-semibold text-ink">{exact.format(amount)}</span> divides at fiscal 2025 ratios
-        </p>
-        <table className="figures mt-2 w-full text-[0.9375rem]">
-          <tbody>
-            <tr>
-              <th scope="row" className="py-1.5 text-left font-semibold">
-                Programs
-              </th>
-              <td className="py-1.5 text-right font-semibold">
-                <span key={amount} className="money-mark money-mark-sweep">
-                  {exact.format(split.programs)}
-                </span>
-              </td>
-            </tr>
-            {split.byProgram.map((p) => (
-              <tr key={p.id} className="text-ink-2">
-                <th scope="row" className="py-1 pl-3 text-left text-sm font-normal">
-                  {p.name}
-                </th>
-                <td className="py-1 text-right text-sm">
-                  <span key={amount} className="money-mark money-mark-sweep">
-                    {exact.format(p.amount)}
-                  </span>
-                </td>
-              </tr>
-            ))}
-            <tr className="border-t border-rule">
-              <th scope="row" className="pt-2 pb-1 text-left font-normal">
-                Management and admin
-              </th>
-              <td className="pt-2 pb-1 text-right">{exact.format(split.admin)}</td>
-            </tr>
-            <tr>
-              <th scope="row" className="py-1 text-left font-normal">
-                Fundraising
-              </th>
-              <td className="py-1 text-right">{exact.format(split.fundraising)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      {split && year ? (
+        <div className="mt-5" aria-live="polite">
+          <p className="text-sm text-ink-2">
+            How <span className="figures font-semibold text-ink">{exact.format(amount)}</span> divides at fiscal{" "}
+            {year.fiscalYear} ratios
+          </p>
+          <table className="figures mt-2 w-full text-[0.9375rem]">
+            <tbody>
+              {split.map((s, i) => (
+                <FragmentRows key={s.key}>
+                  <tr className={cn(i === 1 && "border-t border-rule")}>
+                    <th scope="row" className={cn("text-left", i === 0 ? "py-1.5 font-semibold" : i === 1 ? "pt-2 pb-1 font-normal" : "py-1 font-normal")}>
+                      {s.label}
+                    </th>
+                    <td className={cn("text-right", i === 0 ? "py-1.5 font-semibold" : i === 1 ? "pt-2 pb-1" : "py-1")}>
+                      {i === 0 ? (
+                        <span key={amount} className="money-mark money-mark-sweep">
+                          {exact.format(s.amount)}
+                        </span>
+                      ) : (
+                        exact.format(s.amount)
+                      )}
+                    </td>
+                  </tr>
+                  {i === 0 && byProgram
+                    ? byProgram.map((p) => (
+                        <tr key={p.id} className="text-ink-2">
+                          <th scope="row" className="py-1 pl-3 text-left text-sm font-normal">
+                            {p.name}
+                          </th>
+                          <td className="py-1 text-right text-sm">
+                            <span key={amount} className="money-mark money-mark-sweep">
+                              {exact.format(p.amount)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    : null}
+                </FragmentRows>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="mt-5 text-sm text-ink-2">We'll show how a gift divides once a financial statement is on file.</p>
+      )}
 
       <Button
         type="submit"
@@ -420,11 +532,11 @@ function GiftComposer() {
       </Button>
       {submitted ? (
         <p role="status" className="mt-3 text-sm text-ink-2">
-          This is a sample profile, so checkout isn't connected yet.
+          {sample ? "This is a sample charity, so checkout isn't connected." : "Checkout isn't connected yet."}
         </p>
       ) : (
         <p className="mt-3 text-[0.8125rem] leading-snug text-ink-3">
-          Illustrative split based on last year's audited spending. It shows proportions, not where a single gift is
+          Illustrative split based on the latest statement on file. It shows proportions, not where a single gift is
           earmarked.
         </p>
       )}
@@ -432,54 +544,97 @@ function GiftComposer() {
   )
 }
 
+/** Lets one table row be followed by optional sub-rows inside a map. */
+function FragmentRows({ children }: { children: ReactNode }) {
+  return <>{children}</>
+}
+
 /* ------------------------------------------------- where the money went */
 
-function WhereTheMoneyWent() {
-  const ledgerTotal = disbursements.reduce((s, d) => s + d.amount, 0)
+function WhereTheMoneyWent({ charity, parts }: { charity: CharityDetail; parts: SpendPart[] }) {
+  const latest = charity.financials[0]
+  const extras = charity.id === NORTHSIDE_ID ? northsideExtras : null
+  const net = latest.totalRevenue != null && latest.totalExpenses != null ? latest.totalRevenue - latest.totalExpenses : null
+  const name = shortName(charity.name)
+
   return (
     <section aria-labelledby="money-title" className="mt-16 lg:col-start-1">
       <SectionOpener id="money" title="Where the money went">
-        The full fiscal 2025 statement, then the most recent payments Northside made to run its programs.
+        Fiscal {latest.fiscalYear}, from the statement on file
+        {charity.financials.length > 1 ? `, with ${charity.financials.length - 1} earlier year${charity.financials.length > 2 ? "s" : ""} below` : ""}.
       </SectionOpener>
 
       <div className="mt-8 grid gap-x-10 gap-y-8 md:grid-cols-2">
         <StatementBlock
           title="Came in"
-          rows={revenue.map((r) => ({ label: r.label, amount: r.amount }))}
-          total={{ label: "Total income", amount: totalRevenue }}
+          rows={[]}
+          total={{ label: "Total revenue", amount: latest.totalRevenue }}
         />
         <StatementBlock
           title="Went out"
-          rows={[
-            { label: "Programs", amount: expenses.programs, money: true },
-            { label: "Management and admin", amount: expenses.admin },
-            { label: "Fundraising", amount: expenses.fundraising },
-          ]}
-          total={{ label: "Total expenses", amount: totalExpenses }}
+          rows={parts.map((p, i) => ({ label: p.label, amount: p.amount, money: i === 0 }))}
+          total={{ label: "Total expenses", amount: latest.totalExpenses }}
         />
       </div>
-      <p className="figures mt-4 text-sm text-ink-2">
-        {whole.format(totalRevenue - totalExpenses)} left over, carried into the food reserve for winter.{" "}
-        <span className="text-ink-3">{charity.period}.</span>
-      </p>
+      {net != null ? (
+        <p className="figures mt-4 text-sm text-ink-2">
+          {net === 0
+            ? `${name} spent what it took in.`
+            : net > 0
+              ? `${whole.format(net)} more came in than went out.`
+              : `${whole.format(-net)} more went out than came in.`}
+        </p>
+      ) : null}
 
+      {charity.financials.length > 1 ? <History financials={charity.financials} /> : null}
+
+      {extras ? <Payments /> : null}
+    </section>
+  )
+}
+
+function History({ financials }: { financials: CharityFinancials[] }) {
+  return (
+    <>
+      <h3 className="mt-12 text-lg font-bold tracking-[-0.01em]">Year by year</h3>
+      <table data-money className="figures mt-3 w-full text-[0.9375rem]">
+        <caption className="sr-only">Spending by fiscal year</caption>
+        <thead>
+          <tr className="border-b border-ink text-left text-[0.8125rem] text-ink-2">
+            <th scope="col" className="py-2 font-medium">Fiscal year</th>
+            <th scope="col" className="py-2 text-right font-medium">Total expenses</th>
+            <th scope="col" className="py-2 text-right font-medium">To programs</th>
+          </tr>
+        </thead>
+        <tbody>
+          {financials.map((f) => (
+            <tr key={f.fiscalYear} className="border-b border-rule">
+              <th scope="row" className="py-2.5 text-left font-medium">{f.fiscalYear}</th>
+              <td className="py-2.5 text-right">{f.totalExpenses != null ? whole.format(f.totalExpenses) : "Not reported"}</td>
+              <td className="py-2.5 text-right">{f.programRatio != null ? `${Math.round(f.programRatio * 100)}¢ per $1` : "Not reported"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
+  )
+}
+
+function Payments() {
+  const { disbursements, programs } = northsideExtras
+  const programName = Object.fromEntries(programs.map((p) => [p.id, p.name])) as Record<string, string>
+  const ledgerTotal = disbursements.reduce((s, d) => s + d.amount, 0)
+  return (
+    <>
       <h3 className="mt-12 text-lg font-bold tracking-[-0.01em]">Recent payments</h3>
       <table data-money className="figures mt-3 w-full text-[0.9375rem]">
         <caption className="sr-only">Payments made in June and late May 2025</caption>
         <thead>
           <tr className="border-b border-ink text-left text-[0.8125rem] text-ink-2">
-            <th scope="col" className="w-16 py-2 font-medium">
-              Date
-            </th>
-            <th scope="col" className="py-2 font-medium">
-              Paid to
-            </th>
-            <th scope="col" className="hidden py-2 font-medium md:table-cell">
-              Program
-            </th>
-            <th scope="col" className="py-2 text-right font-medium">
-              Amount
-            </th>
+            <th scope="col" className="w-16 py-2 font-medium">Date</th>
+            <th scope="col" className="py-2 font-medium">Paid to</th>
+            <th scope="col" className="hidden py-2 font-medium md:table-cell">Program</th>
+            <th scope="col" className="py-2 text-right font-medium">Amount</th>
           </tr>
         </thead>
         <tbody>
@@ -492,9 +647,7 @@ function WhereTheMoneyWent() {
                 <span className="block text-sm text-ink-3 md:hidden">{programName[d.program]}</span>
               </td>
               <td className="hidden py-3 pr-3 text-ink-2 md:table-cell">{programName[d.program]}</td>
-              <td className="py-3 text-right font-medium whitespace-nowrap">
-                {exact.format(d.amount)}
-              </td>
+              <td className="py-3 text-right font-medium whitespace-nowrap">{exact.format(d.amount)}</td>
             </tr>
           ))}
         </tbody>
@@ -506,16 +659,13 @@ function WhereTheMoneyWent() {
             <th scope="row" colSpan={3} className="hidden pt-3 text-left text-sm font-normal text-ink-2 md:table-cell">
               {disbursements.length} most recent payments
             </th>
-            <td className="pt-3 text-right font-semibold md:hidden">
-              <span className="money-mark">{exact.format(ledgerTotal)}</span>
-            </td>
-            <td className="hidden pt-3 text-right font-semibold md:table-cell">
+            <td className="pt-3 text-right font-semibold">
               <span className="money-mark">{exact.format(ledgerTotal)}</span>
             </td>
           </tr>
         </tfoot>
       </table>
-    </section>
+    </>
   )
 }
 
@@ -526,7 +676,7 @@ function StatementBlock({
 }: {
   title: string
   rows: { label: string; amount: number; money?: boolean }[]
-  total: { label: string; amount: number }
+  total: { label: string; amount: number | null }
 }) {
   return (
     <table data-money className="figures w-full text-[0.9375rem]">
@@ -534,9 +684,7 @@ function StatementBlock({
       <tbody>
         {rows.map((r) => (
           <tr key={r.label} className="border-b border-rule">
-            <th scope="row" className="py-2 pr-3 text-left font-normal">
-              {r.label}
-            </th>
+            <th scope="row" className="py-2 pr-3 text-left font-normal">{r.label}</th>
             <td className="py-2 text-right whitespace-nowrap">
               {r.money ? <span className="money-mark font-semibold">{whole.format(r.amount)}</span> : whole.format(r.amount)}
             </td>
@@ -545,11 +693,13 @@ function StatementBlock({
       </tbody>
       <tfoot>
         <tr>
-          <th scope="row" className="pt-2.5 pr-3 text-left font-semibold">
-            {total.label}
-          </th>
+          <th scope="row" className="pt-2.5 pr-3 text-left font-semibold">{total.label}</th>
           <td className="pt-2.5 text-right font-semibold">
-            <span className="border-b-[3px] border-double border-ink pb-0.5">{whole.format(total.amount)}</span>
+            {total.amount != null ? (
+              <span className="border-b-[3px] border-double border-ink pb-0.5">{whole.format(total.amount)}</span>
+            ) : (
+              <span className="font-normal text-ink-3">Not reported</span>
+            )}
           </td>
         </tr>
       </tfoot>
@@ -557,98 +707,101 @@ function StatementBlock({
   )
 }
 
-/* ------------------------------------------------------------------ audit */
-
-function Audit() {
-  return (
-    <section aria-labelledby="audit-title" className="mt-20 lg:col-start-1">
-      <SectionOpener id="audit" title="What was audited, and what wasn't">
-        Northside became a vetted partner after an {charity.partner.auditor} of its fiscal 2025 books, completed{" "}
-        {charity.partner.auditedOn}. The audit checks the money. The counts Northside reports about its work are its own
-        and haven't been verified.
-      </SectionOpener>
-
-      <div className="mt-8 grid gap-x-10 gap-y-10 md:grid-cols-2">
-        <div>
-          <h3 className="flex items-center gap-2 border-b border-ink pb-2 text-[0.9375rem] font-bold">
-            <Check className="size-4 text-forest" strokeWidth={2.5} aria-hidden />
-            Checked by the audit
-          </h3>
-          <ul>
-            {audited.map((c) => (
-              <li key={c.label} className="border-b border-rule py-3">
-                <p className="font-semibold">{c.label}</p>
-                <p className="text-[0.9375rem] text-ink-2">{c.detail}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3 className="flex items-center gap-2 border-b border-dashed border-ink-3 pb-2 text-[0.9375rem] font-bold">
-            <CircleDashed className="size-4 text-ink-3" strokeWidth={2} aria-hidden />
-            Reported by Northside, not audited
-          </h3>
-          <dl className="figures">
-            {selfReported.map((c) => (
-              <div key={c.label} className="flex items-baseline justify-between gap-4 border-b border-dashed border-rule py-3">
-                <dt className="text-ink-2">{c.label}</dt>
-                <dd className="font-semibold">{c.detail}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="mt-4 font-serif text-[0.9375rem] leading-[1.55] text-ink-2">
-            Clear Cause shows these counts as Northside reports them. Treat them as the charity's own account.
-          </p>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 /* ------------------------------------------------------------------ match */
 
-function WhyMatched() {
+function WhyMatched({ charity, params, hasPrefs }: { charity: CharityDetail; params: URLSearchParams; hasPrefs: boolean }) {
+  const name = shortName(charity.name)
+  if (!hasPrefs) {
+    return (
+      <section aria-labelledby="match-title" className="mt-20 lg:col-start-1">
+        <SectionOpener id="match" title={`How ${name} fits you`}>
+          Take the two-minute quiz and we'll score {charity.name} against the causes, place and size you care about.
+        </SectionOpener>
+        <a
+          href="/quiz"
+          className="mt-6 inline-flex h-11 items-center gap-2 rounded-[2px] bg-forest px-5 text-[0.9375rem] font-semibold text-paper no-underline hover:bg-forest-deep"
+        >
+          Take the quiz
+          <ArrowRight className="size-4" aria-hidden />
+        </a>
+      </section>
+    )
+  }
+
+  const prefs = readPreferences(params, charity.region ? [charity.region, ...params.getAll("region")] : params.getAll("region"))
+  const [result] = rankCharities([charity], prefs)
+  const rows: { label: string; yours: string; theirs: string; met: boolean | null }[] = []
+  if (prefs.causes.length) {
+    const shared = prefs.causes.filter((c) => charity.causes.includes(c))
+    rows.push({
+      label: "Causes",
+      yours: prefs.causes.map((c) => causeLabel[c]).join(", "),
+      theirs: charity.causes.map((c) => causeLabel[c]).join(", ") || "None tagged",
+      met: shared.length > 0,
+    })
+  }
+  if (prefs.region) {
+    rows.push({ label: "Where", yours: prefs.region, theirs: charity.place || "Not listed", met: charity.region === prefs.region })
+  }
+  if (prefs.preferSmall) {
+    rows.push({
+      label: "Size",
+      yours: "Under $1M a year",
+      theirs: charity.annualBudgetUsd != null ? `${compactUsd(charity.annualBudgetUsd)} a year` : "Not reported",
+      met: charity.annualBudgetUsd != null ? charity.annualBudgetUsd < smallBudgetUsd : null,
+    })
+  }
+  if (prefs.directPctMin > 0) {
+    rows.push({
+      label: "To programs",
+      yours: `At least ${prefs.directPctMin}%`,
+      theirs: charity.directPct != null ? `${charity.directPct}%` : "Not reported",
+      met: charity.directPct != null ? charity.directPct >= prefs.directPctMin : null,
+    })
+  }
+
   return (
     <section aria-labelledby="match-title" className="mt-20 lg:col-start-1">
-      <SectionOpener id="match" title="Why Northside is in your matches">
-        It meets all {match.reasons.length} of the preferences you set, {match.donor}. You can change them at any time.
+      <SectionOpener id="match" title={`Why ${name} is in your matches`}>
+        {result?.score != null
+          ? `A ${result.score}% fit with your quiz answers. Causes count most, then transparency, the share reaching programs, and partner status.`
+          : "Here's how it lines up with your quiz answers."}
       </SectionOpener>
 
       <table className="mt-8 w-full text-[0.9375rem]">
-        <caption className="sr-only">Your giving preferences compared with Northside</caption>
+        <caption className="sr-only">Your giving preferences compared with {charity.name}</caption>
         <thead>
           <tr className="border-b border-ink text-left text-[0.8125rem] text-ink-2">
-            <th scope="col" className="w-20 py-2 font-medium">
-              <span className="sr-only">Preference</span>
-            </th>
-            <th scope="col" className="py-2 pr-3 font-medium">
-              You asked for
-            </th>
-            <th scope="col" className="py-2 font-medium">
-              Northside
-            </th>
-            <th scope="col" className="w-8 py-2">
-              <span className="sr-only">Met</span>
-            </th>
+            <th scope="col" className="w-24 py-2 font-medium"><span className="sr-only">Preference</span></th>
+            <th scope="col" className="py-2 pr-3 font-medium">You asked for</th>
+            <th scope="col" className="py-2 font-medium">{name}</th>
+            <th scope="col" className="w-8 py-2"><span className="sr-only">Met</span></th>
           </tr>
         </thead>
         <tbody>
-          {match.reasons.map((r) => (
-            <tr key={r.preference} className="border-b border-rule align-top">
-              <th scope="row" className="py-3 pr-3 text-left text-sm font-medium text-ink-2">
-                {r.preference}
-              </th>
+          {rows.map((r) => (
+            <tr key={r.label} className="border-b border-rule align-top">
+              <th scope="row" className="py-3 pr-3 text-left text-sm font-medium text-ink-2">{r.label}</th>
               <td className="py-3 pr-3">{r.yours}</td>
               <td className="figures py-3 pr-3 font-medium">{r.theirs}</td>
               <td className="py-3 text-right">
-                <Check className="ml-auto size-4 text-forest" strokeWidth={2.5} aria-label="Met" />
+                {r.met ? (
+                  <Check className="ml-auto size-4 text-forest" strokeWidth={2.5} aria-label="Met" />
+                ) : r.met === false ? (
+                  <Minus className="ml-auto size-4 text-ink-3" strokeWidth={2.5} aria-label="Not met" />
+                ) : (
+                  <CircleDashed className="ml-auto size-4 text-ink-3" strokeWidth={2} aria-label="Unknown" />
+                )}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      {result?.reasons.length ? (
+        <p className="mt-4 text-sm font-medium text-forest">{result.reasons.join(" · ")}</p>
+      ) : null}
       <p className="mt-4 text-sm">
-        <a href="/matches" className="font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
+        <a href="/quiz" className="font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
           Edit your giving preferences
         </a>
       </p>
@@ -656,14 +809,117 @@ function WhyMatched() {
   )
 }
 
+/* ----------------------------------------------------------- the sources */
+
+function Sources({ charity, sample }: { charity: CharityDetail; sample: boolean }) {
+  const extras = charity.id === NORTHSIDE_ID ? northsideExtras : null
+  return (
+    <section aria-labelledby="sources-title" className="mt-20 lg:col-start-1">
+      <SectionOpener id="sources" title="Where the figures come from">
+        Every number on this page traces to a statement. The transparency score reflects how much {charity.name} publishes
+        about its work and money.
+      </SectionOpener>
+
+      <dl className="mt-8">
+        <div className="grid gap-1 border-b border-rule py-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
+          <dt className="text-sm font-medium text-ink-2">Partner status</dt>
+          <dd>{charity.isPartner ? "Vetted partner: passed Clear Cause's financial audit" : "Listed charity, not yet a vetted partner"}</dd>
+        </div>
+        <div className="figures grid gap-1 border-b border-rule py-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
+          <dt className="text-sm font-medium text-ink-2">Transparency score</dt>
+          <dd>{charity.transparencyScore != null ? `${charity.transparencyScore} out of 100` : "Not scored yet"}</dd>
+        </div>
+        {charity.financials.map((f) => (
+          <div key={f.fiscalYear} className="grid gap-1 border-b border-rule py-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
+            <dt className="figures text-sm font-medium text-ink-2">Fiscal {f.fiscalYear} figures</dt>
+            <dd>
+              {f.sourceUrl ? (
+                <>
+                  <a href={f.sourceUrl} className="inline-flex items-center gap-1 font-medium text-forest underline decoration-forest/40 hover:decoration-forest" rel="noreferrer" target="_blank">
+                    {sourceLabel(f.sourceUrl)}
+                    <ExternalLink className="size-3.5" aria-hidden />
+                  </a>
+                  {f.scrapedAt ? <span className="text-ink-2"> · read {new Date(f.scrapedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span> : null}
+                </>
+              ) : sample ? (
+                <span className="text-ink-2">Seeded sample figures, entered by the Clear Cause team</span>
+              ) : (
+                <span className="text-ink-2">Entered by the Clear Cause team</span>
+              )}
+            </dd>
+          </div>
+        ))}
+        {charity.websiteUrl && !sample ? (
+          <div className="grid gap-1 border-b border-rule py-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
+            <dt className="text-sm font-medium text-ink-2">Website</dt>
+            <dd>
+              <a href={charity.websiteUrl} className="font-medium text-forest underline decoration-forest/40" rel="noreferrer" target="_blank">
+                {charity.websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+              </a>
+            </dd>
+          </div>
+        ) : null}
+      </dl>
+
+      {extras ? (
+        <div className="mt-10 grid gap-x-10 gap-y-10 md:grid-cols-2">
+          <div>
+            <h3 className="flex items-center gap-2 border-b border-ink pb-2 text-[0.9375rem] font-bold">
+              <Check className="size-4 text-forest" strokeWidth={2.5} aria-hidden />
+              Checked in the partner audit
+            </h3>
+            <ul>
+              {extras.audited.map((c) => (
+                <li key={c.label} className="border-b border-rule py-3">
+                  <p className="font-semibold">{c.label}</p>
+                  <p className="text-[0.9375rem] text-ink-2">{c.detail}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="flex items-center gap-2 border-b border-dashed border-ink-3 pb-2 text-[0.9375rem] font-bold">
+              <CircleDashed className="size-4 text-ink-3" strokeWidth={2} aria-hidden />
+              Reported by {shortName(charity.name)}, not audited
+            </h3>
+            <dl className="figures">
+              {extras.selfReported.map((c) => (
+                <div key={c.label} className="flex items-baseline justify-between gap-4 border-b border-dashed border-rule py-3">
+                  <dt className="text-ink-2">{c.label}</dt>
+                  <dd className="font-semibold">{c.detail}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
+/** "statement.pdf, page 4" from a statement URL with an optional #page=N. */
+function sourceLabel(url: string) {
+  try {
+    const u = new URL(url)
+    if (u.hostname.endsWith("propublica.org")) return "IRS Form 990 via ProPublica Nonprofit Explorer"
+    const file = decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() ?? u.hostname)
+    const page = u.hash.match(/page=(\d+)/)?.[1]
+    return `${file}${page ? `, page ${page}` : ""}`
+  } catch {
+    return url
+  }
+}
+
 /* --------------------------------------------------------------- programs */
 
 function Programs() {
+  const { programs } = northsideExtras
+  const total = programs.reduce((s, p) => s + p.spending, 0)
   return (
-    <section aria-labelledby="programs-title" className="mt-20 mb-24 lg:col-start-1">
+    <section aria-labelledby="programs-title" className="mt-20 lg:col-start-1">
       <SectionOpener id="programs" title="Programs and what they cost">
-        Three programs took {whole.format(expenses.programs)} last year. Spending is audited. What each program delivered
-        is Northside's own count, so each unit cost divides audited spending by a reported number.
+        Three programs took {whole.format(total)} last year. What each delivered is Northside's own count, so each unit
+        cost divides audited spending by a reported number.
       </SectionOpener>
 
       <ol className="mt-6">
@@ -676,7 +932,7 @@ function Programs() {
             <dl data-money className="figures grid grid-cols-2 gap-x-4 gap-y-3 self-start text-[0.9375rem] md:grid-cols-1 md:gap-y-2">
               <ProgramFigure label="Spent">
                 <span className="money-mark font-semibold">{whole.format(p.spending)}</span>
-                <span className="text-ink-3"> · {pct(p.spending / expenses.programs)}</span>
+                <span className="text-ink-3"> · {((p.spending / total) * 100).toFixed(1)}%</span>
               </ProgramFigure>
               <ProgramFigure label="Cost" reported>
                 {exact.format(p.unitCost.value)} {p.unitCost.unit}
@@ -703,7 +959,7 @@ function ProgramFigure({ label, reported, children }: { label: string; reported?
         {reported ? (
           <>
             <CircleDashed className="size-3 text-ink-3" strokeWidth={2} aria-hidden />
-            <span className="sr-only">(reported by Northside, not audited)</span>
+            <span className="sr-only">(reported by the charity, not audited)</span>
           </>
         ) : null}
       </dt>
@@ -714,22 +970,23 @@ function ProgramFigure({ label, reported, children }: { label: string; reported?
 
 /* --------------------------------------------------------------- colophon */
 
-function Colophon() {
+function Colophon({ charity, sample }: { charity: CharityDetail; sample: boolean }) {
   return (
-    <footer className="bg-forest-deep text-paper">
+    <footer className="mt-24 bg-forest-deep text-paper">
       <div className="mx-auto flex max-w-[76rem] flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-end md:justify-between lg:px-10">
         <div className="max-w-[56ch]">
           <p className="font-bold">Clear Cause</p>
           <p className="mt-2 text-sm leading-relaxed text-paper/80">
-            Figures on this sample profile follow the layout of a partner's audited annual statement. They are
-            illustrative and describe no real organization.
+            {sample
+              ? `${charity.name} is seeded sample data. Its figures are illustrative and describe no real organization.`
+              : "Figures come from the charity's published financial statements, linked above."}
           </p>
         </div>
         <a
           href="#give"
           className="inline-flex h-11 items-center self-start rounded-[2px] border border-paper/50 px-5 text-[0.9375rem] font-semibold text-paper no-underline hover:border-paper hover:bg-paper hover:text-forest-deep md:self-auto"
         >
-          Give to Northside
+          Give to {shortName(charity.name)}
         </a>
       </div>
     </footer>

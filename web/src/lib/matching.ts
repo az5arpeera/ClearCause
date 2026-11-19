@@ -130,3 +130,65 @@ export function rankCharities(charities: readonly MatchableCharity[], preference
     || a.charity.name.localeCompare(b.charity.name)
     || a.charity.id.localeCompare(b.charity.id))
 }
+
+// A soft penalty for charities below the donor's minimum share to programs:
+// they drop in the order instead of disappearing.
+const belowDirectPenalty = 0.1
+
+/**
+ * For You suggestions: the same composite score as `rankCharities`, but
+ * nothing is filtered out. Every charity is ranked; ones sharing a chosen cause
+ * come first (`fits`), the rest follow as things worth a look (`more`). A
+ * minimum share to programs, a region and "prefer small" all become nudges.
+ */
+export function suggestCharities<T extends MatchableCharity>(charities: readonly T[], preferences: Preferences) {
+  const selectedCauses = new Set(preferences.causes)
+  const hasCauses = selectedCauses.size > 0
+  const donorNorm = Math.sqrt(selectedCauses.size)
+
+  const ranked = charities.map((charity) => {
+    const matchedCauses = causes.filter(({ id }) => selectedCauses.has(id) && charity.causes.includes(id))
+    const charityNorm = Math.sqrt(charity.causes.length)
+    const causeAlignment = hasCauses && charityNorm > 0 ? matchedCauses.length / (donorNorm * charityNorm) : 0
+    const transparencyNorm = charity.transparencyScore != null ? charity.transparencyScore / 100 : neutralNorm
+    const efficiencyNorm = charity.directPct != null ? charity.directPct / 100 : neutralNorm
+    const partnerFlag = charity.isPartner ? 1 : 0
+    const relevance = weights.cause * causeAlignment
+      + weights.transparency * transparencyNorm
+      + weights.efficiency * efficiencyNorm
+      + weights.partner * partnerFlag
+
+    const sameRegion = Boolean(preferences.region) && charity.region === preferences.region
+    const smallBudget = preferences.preferSmall && charity.annualBudgetUsd !== undefined
+      && charity.annualBudgetUsd >= 0 && charity.annualBudgetUsd < smallBudgetUsd
+    const belowDirect = preferences.directPctMin > 0 && charity.directPct !== undefined
+      && charity.directPct < preferences.directPctMin
+    const ranking = relevance + (sameRegion ? regionNudge : 0) + (smallBudget ? smallBudgetNudge : 0)
+      - (belowDirect ? belowDirectPenalty : 0)
+
+    return {
+      charity,
+      ranking,
+      relevance,
+      sharesCause: matchedCauses.length > 0,
+      score: hasCauses ? Math.round(100 * relevance) : null,
+      reasons: [
+        ...matchedCauses.map(({ label }) => label),
+        ...(sameRegion ? [`Based in ${charity.region}`] : []),
+        ...(smallBudget ? ["Small organization"] : []),
+        ...(charity.transparencyScore != null && charity.transparencyScore >= 85 ? ["High transparency"] : []),
+        ...(charity.directPct != null && charity.directPct >= 80 ? [`${charity.directPct}% reaches the cause`] : []),
+        ...(charity.isPartner ? ["Vetted partner"] : []),
+      ],
+      cautions: belowDirect ? [`Below your ${preferences.directPctMin}% minimum to programs`] : [],
+    }
+  }).sort((a, b) =>
+    Number(b.sharesCause) - Number(a.sharesCause)
+    || b.ranking - a.ranking
+    || a.charity.name.localeCompare(b.charity.name))
+
+  return {
+    fits: hasCauses ? ranked.filter((r) => r.sharesCause) : ranked,
+    more: hasCauses ? ranked.filter((r) => !r.sharesCause) : [],
+  }
+}

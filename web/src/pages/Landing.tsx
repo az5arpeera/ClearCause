@@ -1,16 +1,18 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react"
 import { ArrowRight, BadgeCheck, Check, CircleDashed, MapPin, ShieldCheck, Sprout } from "lucide-react"
 
-import { AuthControl } from "@/components/AuthControl"
 import { FloatingDonate } from "@/components/FloatingDonate"
 import { Logo } from "@/components/Logo"
 import { useLiquidGlass } from "@/lib/liquid-glass"
 import { cn } from "@/lib/utils"
-import { expenses, programs } from "@/data/sample-charity"
+import { causes as causeList } from "@/data/causes"
+import { NORTHSIDE_ID, northsideExtras } from "@/data/sample-charity"
+import { fetchVettedCharityDetails, type CharityDetail } from "@/lib/db"
+import { compactUsd, spendingParts, type SpendPart } from "@/lib/money"
+import { SiteHeader } from "@/components/SiteHeader"
 import {
   auditChecks,
   auditGaps,
-  counters,
   donor,
   orgs,
   photos,
@@ -24,12 +26,25 @@ const whole = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD
 const exact = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 })
 const orgById = Object.fromEntries(orgs.map((o) => [o.id, o])) as Record<string, Org>
 
-const totalExpenses = expenses.programs + expenses.admin + expenses.fundraising
-const cents = {
-  programs: Math.round((expenses.programs / totalExpenses) * 100),
-  admin: Math.round((expenses.admin / totalExpenses) * 100),
+const causeById = Object.fromEntries(causeList.map((c) => [c.id, c])) as Record<string, (typeof causeList)[number]>
+
+/** Vetted charities from Supabase, shared by every live section on the page. */
+function useLiveCharities() {
+  const [state, setState] = useState<{ list: CharityDetail[] | null; error: boolean }>({ list: null, error: false })
+  useEffect(() => {
+    let active = true
+    fetchVettedCharityDetails()
+      .then((list) => active && setState({ list, error: false }))
+      .catch(() => active && setState({ list: null, error: true }))
+    return () => {
+      active = false
+    }
+  }, [])
+  return state
 }
-const centsFundraising = 100 - cents.programs - cents.admin
+
+/** Charity names don't shorten reliably, so copy uses the full name. */
+const shortName = (name: string) => name
 
 /* ------------------------------------------------------------------ trail */
 
@@ -168,6 +183,7 @@ function Tick({ dashed = false, className }: { dashed?: boolean; className?: str
 export default function Landing() {
   useTrailDrawing()
   useLiquidGlass()
+  const live = useLiveCharities()
   return (
     <div className="min-h-svh overflow-x-clip bg-paper text-ink">
       <a
@@ -176,13 +192,13 @@ export default function Landing() {
       >
         Skip to content
       </a>
-      <Masthead />
+      <SiteHeader />
       <main id="main">
-        <Hero />
-        <WhereTheMoneyGoes />
+        <Hero live={live} />
+        <WhereTheMoneyGoes live={live} />
         <HowMatchingWorks />
         <VerifiedPartners />
-        <SmallNonprofits />
+        <SmallNonprofits live={live} />
         <StreakStrip />
         <FinalCall />
       </main>
@@ -194,47 +210,11 @@ export default function Landing() {
 
 const HIDE_DONATE_WHILE = ["#start", "#next"]
 
-function Masthead() {
-  const links = [
-    ["How matching works", "#matching"],
-    ["Where money goes", "#money"],
-    ["Partners", "#partners"],
-  ]
-  return (
-    <header className="lg lg-forest lg-text sticky top-0 z-40" data-refract="0.8" data-refract-bezel="10">
-      <div className="mx-auto flex h-16 max-w-none items-center gap-8 px-4 sm:px-6 lg:px-10">
-        <Logo />
-        <nav aria-label="Primary" className="hidden h-full md:block">
-          <ul className="flex h-full items-center gap-1.5">
-            {links.map(([label, href]) => (
-              <li key={href}>
-                <a href={href} className="nav-bubble">
-                  {label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <div className="ml-auto flex items-center gap-1.5">
-          <a href="/partners" className="nav-bubble hidden sm:inline-flex">
-            For nonprofits
-          </a>
-          <a
-            href="#start"
-            className="nav-bubble nav-bubble-primary hidden sm:inline-flex"
-          >
-            Find my matches
-          </a>
-          <AuthControl />
-        </div>
-      </div>
-    </header>
-  )
-}
-
 /* ------------------------------------------------------------------- hero */
 
-function Hero() {
+type Live = ReturnType<typeof useLiveCharities>
+
+function Hero({ live }: { live: Live }) {
   const trackRef = useRef<HTMLDivElement>(null)
   const rowRef = useRef<HTMLDivElement>(null)
   const [lineTop, setLineTop] = useState(0)
@@ -300,8 +280,8 @@ function Hero() {
         <h2 id="counters-title" className="sr-only">
           Clear Cause in numbers
         </h2>
-        <dl data-money className="figures grid grid-cols-2 border-t border-ink md:grid-cols-4">
-          {counters.map((c) => (
+        <dl data-money className="figures grid grid-cols-2 border-t border-ink md:grid-cols-4" aria-busy={!live.list || undefined}>
+          {liveCounters(live.list).map((c) => (
             <div key={c.label} className="border-b border-rule py-4 pr-4 md:border-b-0">
               <dt className="sr-only">{c.label}</dt>
               <dd className="text-[1.75rem] leading-tight font-bold tracking-[-0.02em] lg:text-[2rem]">{c.value}</dd>
@@ -310,11 +290,36 @@ function Hero() {
           ))}
         </dl>
         <p className="mt-3 text-[0.8125rem] text-ink-3">
-          Sample figures. Clear Cause is a prototype, and these totals are illustrative.
+          {live.error
+            ? "Live totals didn't load. Refresh to try again."
+            : "Live from the Clear Cause database. The charities listed are seeded samples until real partners are vetted."}
         </p>
       </OnTrail>
     </>
   )
+}
+
+/** Platform totals, computed from the vetted charities in the database. */
+function liveCounters(list: CharityDetail[] | null) {
+  if (!list) {
+    return [
+      { value: "–", label: "vetted charities listed" },
+      { value: "–", label: "vetted partners" },
+      { value: "–", label: "spend under $1M a year" },
+      { value: "–", label: "median to programs, per $1" },
+    ]
+  }
+  const partners = list.filter((c) => c.isPartner).length
+  const withBudget = list.filter((c) => c.annualBudgetUsd != null)
+  const small = withBudget.filter((c) => c.annualBudgetUsd! < 1_000_000).length
+  const pcts = list.flatMap((c) => (c.directPct != null ? [c.directPct] : [])).sort((a, b) => a - b)
+  const mid = pcts.length ? (pcts.length % 2 ? pcts[(pcts.length - 1) / 2] : Math.round((pcts[pcts.length / 2 - 1] + pcts[pcts.length / 2]) / 2)) : null
+  return [
+    { value: String(list.length), label: "vetted charities listed" },
+    { value: String(partners), label: "vetted partners" },
+    { value: withBudget.length ? `${Math.round((small / withBudget.length) * 100)}%` : "–", label: "spend under $1M a year" },
+    { value: mid != null ? `${mid}¢` : "–", label: "median to programs, per $1" },
+  ]
 }
 
 /**
@@ -521,102 +526,111 @@ function SectionHead({
   )
 }
 
-function WhereTheMoneyGoes() {
-  const overhead = [
-    { label: "Fundraising", cents: centsFundraising, amount: expenses.fundraising, what: "events and donor mail" },
-    { label: "Management and admin", cents: cents.admin, amount: expenses.admin, what: "rent, insurance and bookkeeping" },
-  ]
+function WhereTheMoneyGoes({ live }: { live: Live }) {
+  const featured =
+    live.list?.find((c) => c.id === NORTHSIDE_ID && c.financials.length) ??
+    live.list?.filter((c) => c.financials.length).sort((a, b) => (b.transparencyScore ?? 0) - (a.transparencyScore ?? 0))[0]
+  const year = featured?.financials[0]
+  const parts: SpendPart[] | null = year ? spendingParts(year) : null
+  const programsPart = parts?.[0]
+  const overhead = parts?.slice(1) ?? []
+  const subPrograms = featured?.id === NORTHSIDE_ID ? northsideExtras.programs : []
   const outputs = ["486,000 lb of food", "624 van stops", "21,700 weekend packs"]
+  const name = featured ? shortName(featured.name) : "a charity"
+
   return (
     <OnTrail id="money" labelledBy="money-title" className="py-16 lg:py-24">
-      <SectionHead id="money-title" title="Follow $1.00 into Northside">
-        Northside Community Pantry is a small food bank in Harlow, Ohio. Its audited books for fiscal 2025 show where each
-        dollar went.
+      <SectionHead id="money-title" title={`Follow $1.00 into ${name}`}>
+        {featured && year
+          ? `${featured.name}${featured.place ? `, in ${featured.place},` : ""} filed figures for fiscal ${year.fiscalYear}. Here's where each dollar went.`
+          : live.error
+            ? "The latest statement didn't load. Refresh to try again."
+            : "Reading the latest statement from the database…"}
       </SectionHead>
 
-      <div data-money className="mt-10 grid gap-x-16 gap-y-12 lg:grid-cols-[minmax(0,1fr)_19rem]">
-        <div className="figures">
-          <ul>
-            {overhead.map((o) => (
-              <li key={o.label} className="relative grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-baseline gap-3 border-b border-rule py-3">
+      {featured && parts && programsPart ? (
+        <div data-money className="mt-10 grid gap-x-16 gap-y-12 lg:grid-cols-[minmax(0,1fr)_19rem]">
+          <div className="figures">
+            <ul>
+              {overhead.map((o) => (
+                <li key={o.key} className="relative grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-baseline gap-3 border-b border-rule py-3">
+                  <Tick />
+                  <span className="text-[1.25rem] font-bold">{o.cents}¢</span>
+                  <span>
+                    {o.label}
+                    <span className="block text-sm text-ink-2">
+                      {o.key === "overhead" ? "rent, insurance, bookkeeping and donor outreach" : o.key === "admin" ? "rent, insurance and bookkeeping" : "events and donor mail"}
+                    </span>
+                  </span>
+                  <span className="text-ink-2">{whole.format(o.amount)}</span>
+                </li>
+              ))}
+              <li className="relative grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-baseline gap-3 border-b border-ink py-3">
                 <Tick />
-                <span className="text-[1.25rem] font-bold">{o.cents}¢</span>
-                <span>
-                  {o.label}
-                  <span className="block text-sm text-ink-2">{o.what}</span>
+                <span className="text-[1.25rem] font-bold">
+                  <span className="money-mark">{programsPart.cents}¢</span>
                 </span>
-                <span className="text-ink-2">{whole.format(o.amount)}</span>
+                <span className="font-semibold">
+                  Programs
+                  <span className="block text-sm font-normal text-ink-2">carries on down the trail</span>
+                </span>
+                <span className="font-semibold">{whole.format(programsPart.amount)}</span>
               </li>
-            ))}
-            <li className="relative grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-baseline gap-3 border-b border-ink py-3">
-              <Tick />
-              <span className="text-[1.25rem] font-bold">
-                <span className="money-mark">{cents.programs}¢</span>
-              </span>
-              <span className="font-semibold">
-                Programs
-                <span className="block text-sm font-normal text-ink-2">carries on down the trail</span>
-              </span>
-              <span className="font-semibold">{whole.format(expenses.programs)}</span>
-            </li>
-          </ul>
+            </ul>
 
-          <ul className="mt-2">
-            {programs.map((p, i) => (
-              <li key={p.id} className="relative grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-0.5 border-b border-rule py-3 sm:grid-cols-[minmax(0,1fr)_auto_12.5rem] sm:pl-[4.25rem]">
-                <Tick dashed />
-                <span className="font-medium">{p.name}</span>
-                <span className="text-right">
-                  <span className="money-mark font-semibold">{whole.format(p.spending)}</span>
-                </span>
-                <span className="col-span-2 flex items-center gap-1.5 text-sm text-ink-2 sm:col-span-1 sm:justify-end">
-                  <CircleDashed className="size-3.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden />
-                  {outputs[i]}
-                  <span className="sr-only">(reported by Northside, not audited)</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 flex items-center gap-1.5 text-[0.8125rem] text-ink-3">
-            <CircleDashed className="size-3.5 text-ink-3" strokeWidth={2} aria-hidden />
-            Counts reported by Northside. The audit covers the money, not the counts.
-          </p>
-        </div>
-
-        <figure className="self-start">
-          <img
-            src={photoUrl(photos.produce.src, 760, 520)}
-            alt={photos.produce.alt}
-            width={380}
-            height={260}
-            loading="lazy"
-            className="mb-1.5 aspect-[19/13] w-full rounded-[2px] object-cover"
-          />
-          <PhotoCredit k="produce" notOrg />
-          <div
-            role="img"
-            aria-label={`One dollar as 100 cents: ${cents.programs} to programs, ${cents.admin} to admin, ${centsFundraising} to fundraising.`}
-            className="mt-6 grid w-full max-w-[19rem] grid-cols-10 gap-[3px]"
-          >
-            {Array.from({ length: 100 }, (_, i) => (
-              <span
-                key={i}
-                className={cn(
-                  "aspect-square",
-                  i < cents.programs ? "bg-money" : i < cents.programs + cents.admin ? "bg-admin" : "bg-fundraising",
-                )}
-              />
-            ))}
+            {subPrograms.length ? (
+              <>
+                <ul className="mt-2">
+                  {subPrograms.map((p, i) => (
+                    <li key={p.id} className="relative grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-0.5 border-b border-rule py-3 sm:grid-cols-[minmax(0,1fr)_auto_12.5rem] sm:pl-[4.25rem]">
+                      <Tick dashed />
+                      <span className="font-medium">{p.name}</span>
+                      <span className="text-right">
+                        <span className="money-mark font-semibold">{whole.format(p.spending)}</span>
+                      </span>
+                      <span className="col-span-2 flex items-center gap-1.5 text-sm text-ink-2 sm:col-span-1 sm:justify-end">
+                        <CircleDashed className="size-3.5 shrink-0 text-ink-3" strokeWidth={2} aria-hidden />
+                        {outputs[i]}
+                        <span className="sr-only">(reported by {name}, not audited)</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 flex items-center gap-1.5 text-[0.8125rem] text-ink-3">
+                  <CircleDashed className="size-3.5 text-ink-3" strokeWidth={2} aria-hidden />
+                  Counts reported by {name}. The audit covers the money, not the counts.
+                </p>
+              </>
+            ) : null}
           </div>
-          <figcaption className="mt-3 text-sm text-ink-2">
-            The same dollar as 100 cents.{" "}
-            <a href="/charity/northside" className="inline-flex items-center gap-1 font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
-              Read Northside's full statement
-              <ArrowRight className="size-3.5" aria-hidden />
-            </a>
-          </figcaption>
-        </figure>
-      </div>
+
+          <figure className="self-start">
+            <img
+              src={photoUrl(photos.produce.src, 760, 520)}
+              alt={photos.produce.alt}
+              width={380}
+              height={260}
+              loading="lazy"
+              className="mb-1.5 aspect-[19/13] w-full rounded-[2px] object-cover"
+            />
+            <PhotoCredit k="produce" notOrg />
+            <div
+              role="img"
+              aria-label={`One dollar as 100 cents: ${parts.map((p) => `${p.cents} to ${p.label.toLowerCase()}`).join(", ")}.`}
+              className="mt-6 grid w-full max-w-[19rem] grid-cols-10 gap-[3px]"
+            >
+              {parts.flatMap((p) => Array.from({ length: p.cents }, (_, i) => <span key={`${p.key}-${i}`} className={cn("aspect-square", p.swatch)} />))}
+            </div>
+            <figcaption className="mt-3 text-sm text-ink-2">
+              The same dollar as 100 cents.{" "}
+              <a href={featured.href} className="inline-flex items-center gap-1 font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
+                Read {name}'s full statement
+                <ArrowRight className="size-3.5" aria-hidden />
+              </a>
+            </figcaption>
+          </figure>
+        </div>
+      ) : null}
     </OnTrail>
   )
 }
@@ -824,9 +838,16 @@ function VerifiedPartners() {
 
 /* -------------------------------------------------------- small nonprofits */
 
-function OrgEntry({ org, layout, tickClass }: { org: Org; layout: "wide" | "portrait" | "square"; tickClass?: string }) {
-  const p = photos[org.photo]
+function OrgEntry({ org, layout, tickClass }: { org: CharityDetail; layout: "wide" | "portrait" | "square"; tickClass?: string }) {
+  const photoKey = (causeById[org.causes[0]]?.photo ?? "garden") as PhotoKey
+  const p = photos[photoKey]
   const size = layout === "wide" ? [1120, 700] : layout === "portrait" ? [600, 760] : [700, 700]
+  const year = org.financials[0]
+  const meta = [
+    org.causes.map((c) => causeById[c]?.label).filter(Boolean).join(", "),
+    org.place,
+    org.annualBudgetUsd != null ? `${compactUsd(org.annualBudgetUsd)} a year` : null,
+  ].filter(Boolean)
   return (
     <article
       className={cn(
@@ -859,59 +880,76 @@ function OrgEntry({ org, layout, tickClass }: { org: Org; layout: "wide" | "port
       </figure>
       <div className={cn(layout === "wide" && "lg:pt-2")}>
         <h3 id={`org-${org.id}`} className={cn("font-bold tracking-[-0.015em]", layout === "wide" ? "text-[1.625rem]" : "text-xl")}>
-          {org.name}
+          <a href={org.href} className="no-underline hover:text-forest hover:underline">
+            {org.name}
+          </a>
         </h3>
-        <p className="mt-1 text-sm text-ink-2">
-          {org.kind} · {org.place} · ${Math.round(org.annualBudgetUsd / 1_000)}K a year
-        </p>
-        <p className="mt-3 max-w-[48ch] font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{org.note}</p>
+        <p className="mt-1 text-sm text-ink-2">{meta.join(" · ")}</p>
+        {org.description ? <p className="mt-3 max-w-[48ch] font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{org.description}</p> : null}
         <dl data-money className="figures mt-4 text-[0.9375rem]">
-          <div className="flex items-baseline justify-between gap-4 border-t border-ink py-2">
-            <dt className="text-ink-2">Spent {org.spent.on}</dt>
-            <dd className="money-mark font-semibold whitespace-nowrap">{whole.format(org.spent.amount)}</dd>
+          {year?.programExpenses != null ? (
+            <div className="flex items-baseline justify-between gap-4 border-t border-ink py-2">
+              <dt className="text-ink-2">Spent on programs, fiscal {year.fiscalYear}</dt>
+              <dd className="money-mark font-semibold whitespace-nowrap">{whole.format(year.programExpenses)}</dd>
+            </div>
+          ) : null}
+          {org.directPct != null ? (
+            <div className="flex items-baseline justify-between gap-4 border-t border-rule py-2">
+              <dt className="text-ink-2">Of each $1, to programs</dt>
+              <dd className="font-semibold">{org.directPct}¢</dd>
+            </div>
+          ) : null}
+          <div className="flex items-baseline justify-between gap-4 border-t border-rule py-2">
+            <dt className="text-ink-2">Transparency</dt>
+            <dd className="font-semibold">{org.transparencyScore != null ? `${org.transparencyScore} / 100` : "Not scored yet"}</dd>
           </div>
           <div className="flex items-baseline justify-between gap-4 border-t border-rule py-2">
-            <dt className="text-ink-2">Of each $1, to programs</dt>
-            <dd className="font-semibold">{org.toPrograms}¢</dd>
-          </div>
-          <div className="flex items-baseline justify-between gap-4 border-t border-dashed border-rule py-2">
-            <dt className="flex items-center gap-1.5 text-ink-2">
-              <CircleDashed className="size-3.5 text-ink-3" strokeWidth={2} aria-hidden />
-              Reported<span className="sr-only">, not audited</span>
-            </dt>
-            <dd className="font-medium">{org.reported}</dd>
-          </div>
-          <div className="flex items-baseline justify-between gap-4 border-t border-rule py-2">
-            <dt className="text-ink-2">Audited</dt>
-            <dd>{org.auditedOn}</dd>
+            <dt className="text-ink-2">Status</dt>
+            <dd>{org.isPartner ? "Vetted partner" : "Listed charity"}</dd>
           </div>
         </dl>
-        {org.href ? (
-          <a href={org.href} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
-            View {org.name.split(" ")[0]}'s profile
-            <ArrowRight className="size-3.5" aria-hidden />
-          </a>
-        ) : null}
+        <a href={org.href} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
+          See where {shortName(org.name)}'s money goes
+          <ArrowRight className="size-3.5" aria-hidden />
+        </a>
       </div>
     </article>
   )
 }
 
-function SmallNonprofits() {
-  const [first, second, third] = [orgById.northside, orgById.eastgate, orgById.riverbend]
+function SmallNonprofits({ live }: { live: Live }) {
+  // Small charities (under $1M a year), most transparent first.
+  const picks = (live.list ?? [])
+    .filter((c) => c.annualBudgetUsd != null && c.annualBudgetUsd < 1_000_000)
+    .sort((a, b) => (b.transparencyScore ?? 0) - (a.transparencyScore ?? 0) || a.name.localeCompare(b.name))
+    .slice(0, 3)
+  const [first, second, third] = picks
   return (
     <OnTrail id="small" labelledBy="small-title" className="py-16 lg:py-24">
       <SectionHead id="small-title" title="Small organizations, first-class">
-        Most partners are local and modest. Here are three your dollar might reach. They are sample organizations, with
-        sample figures.
+        {live.list
+          ? `The three most transparent charities on Clear Cause that spend under $1M a year, straight from the database.`
+          : live.error
+            ? "The charity list didn't load. Refresh to try again."
+            : "Loading the most transparent small charities…"}
       </SectionHead>
-      <div className="mt-12 space-y-16">
-        <OrgEntry org={first} layout="wide" />
-        <div className="grid gap-x-12 gap-y-16 xl:grid-cols-2">
-          <OrgEntry org={second} layout="portrait" />
-          <OrgEntry org={third} layout="square" tickClass="xl:hidden" />
+      {first ? (
+        <div className="mt-12 space-y-16">
+          <OrgEntry org={first} layout="wide" />
+          {second ? (
+            <div className="grid gap-x-12 gap-y-16 xl:grid-cols-2">
+              <OrgEntry org={second} layout="portrait" />
+              {third ? <OrgEntry org={third} layout="square" tickClass="xl:hidden" /> : null}
+            </div>
+          ) : null}
         </div>
-      </div>
+      ) : null}
+      <p className="mt-10 text-sm">
+        <a href="/explore" className="inline-flex items-center gap-1 font-medium text-forest underline decoration-forest/40 hover:decoration-forest">
+          Browse every charity
+          <ArrowRight className="size-3.5" aria-hidden />
+        </a>
+      </p>
     </OnTrail>
   )
 }
