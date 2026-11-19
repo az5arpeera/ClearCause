@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react"
 import { ArrowLeft } from "lucide-react"
 
+import { PageBackdrop } from "@/components/Glass"
 import { SiteHeader } from "@/components/SiteHeader"
 import { useAuth } from "@/lib/auth"
 
@@ -57,11 +58,12 @@ export default function SignIn() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col bg-paper text-ink">
+    <div className="relative isolate flex min-h-svh flex-col bg-paper text-ink">
+      <PageBackdrop size="full" />
       <SiteHeader />
 
-      <main className="mx-auto w-full max-w-[76rem] flex-1 px-4 py-16 sm:px-6 lg:px-10 lg:py-24">
-        <div className="max-w-[26rem] border-t-2 border-forest pt-5">
+      <main id="main" className="mx-auto w-full max-w-[76rem] flex-1 px-4 py-16 sm:px-6 lg:px-10 lg:py-24">
+        <div className="max-w-[26rem] lg lg-paper rounded-[12px] p-6 sm:p-8" data-refract="0.4" data-refract-source="#page-backdrop">
           <h1 className="text-[2rem] leading-tight font-bold tracking-[-0.02em] text-balance">
             {mode === "signin" ? "Sign in to Clear Cause" : "Create your account"}
           </h1>

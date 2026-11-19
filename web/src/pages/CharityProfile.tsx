@@ -3,6 +3,8 @@ import { ArrowRight, BadgeCheck, Check, CircleDashed, ExternalLink, Minus } from
 
 import { Button } from "@/components/ui/button"
 import { FloatingDonate } from "@/components/FloatingDonate"
+import { PageBackdrop } from "@/components/Glass"
+import { glassChip, refract } from "@/lib/glass"
 import { SiteHeader } from "@/components/SiteHeader"
 import { causes } from "@/data/causes"
 import { NORTHSIDE_ID, northsideExtras, presetGifts } from "@/data/sample-charity"
@@ -23,8 +25,8 @@ const isSampleCharity = (c: CharityDetail) => Boolean(c.websiteUrl?.includes(".e
 const shortName = (name: string) => name
 
 export default function CharityProfile({ id }: { id: string }) {
-  useLiquidGlass()
   const [charity, setCharity] = useState<CharityDetail | null | undefined>(undefined)
+  useLiquidGlass(charity)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -42,7 +44,8 @@ export default function CharityProfile({ id }: { id: string }) {
   }, [id])
 
   return (
-    <div className="min-h-svh bg-paper text-ink">
+    <div className="relative isolate min-h-svh overflow-x-clip bg-paper text-ink">
+      <PageBackdrop />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:bg-paper focus:px-3 focus:py-2"
@@ -207,11 +210,11 @@ function ProfileHeader({
         <p className="mt-6 max-w-[62ch] font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{charity.description}</p>
       ) : null}
 
-      <nav aria-label="On this page" className="mt-8 border-y border-rule">
-        <ul className="-mx-3 flex overflow-x-auto text-sm font-medium whitespace-nowrap [scrollbar-width:none]">
+      <nav aria-label="On this page" className="mt-8">
+        <ul className="-mx-1 flex gap-2 overflow-x-auto px-1 py-1 whitespace-nowrap [scrollbar-width:none]">
           {contents.map(([label, href]) => (
             <li key={href}>
-              <a href={href} className="block px-3 py-2.5 text-ink-2 no-underline hover:text-forest hover:underline">
+              <a href={href} className={glassChip} {...refract}>
                 {label}
               </a>
             </li>

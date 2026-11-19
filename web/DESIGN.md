@@ -339,7 +339,7 @@ The glass blurs and saturates what's behind it and bends it at the rim. It carri
 ### Named Rules
 **The Solid Money Rule.** Money figures, tables and statements never sit on glass, and glass never sits on them as decoration. Glass is for things you press or navigate with, not things you read as evidence.
 
-**The Three Places Rule.** Liquid glass appears in exactly three places: the top nav, the floating action button and the dashboard filter chips. Anything else that frosts is a bug.
+**The Functional Glass Rule.** Liquid glass is on every page, but only on the functional layer: the top nav, the floating action button, chips (filters, page sections, next steps), filter and answer panels, and form cards. Each app page sets the same soft photo backdrop behind its header and intro (`PageBackdrop` in `web/src/components/Glass.tsx`) so the glass has something to refract; the class strings live in `web/src/lib/glass.ts`. Charity lists, charts, statements and the gift form stay solid. Glass on anything you read as evidence is a bug.
 
 ## Shapes
 

@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react"
-import { SlidersHorizontal, X } from "lucide-react"
+import { Check, Sparkles, SlidersHorizontal, X } from "lucide-react"
 
 import { CharityRow } from "@/components/CharityRow"
-import { SiteHeader } from "@/components/SiteHeader"
+import { PageFrame } from "@/components/Glass"
+import { glassChip, glassPanel, refract } from "@/lib/glass"
 import { causes, type CauseId } from "@/data/causes"
 import { fetchVettedCharityDetails, type CharityDetail } from "@/lib/db"
+import { useLiquidGlass } from "@/lib/liquid-glass"
+import { hasCompletedQuiz } from "@/lib/preferences"
 import { cn } from "@/lib/utils"
 
 /* --------------------------------------------------------------- the bands */
@@ -130,6 +133,8 @@ export default function Explore() {
   const [error, setError] = useState<string | null>(null)
   const [f, setF] = useState<Filters>(readFilters)
   const [metric, setMetric] = useState<Metric>("transparency")
+  const [quizDone] = useState(hasCompletedQuiz)
+  useLiquidGlass(`${list?.length}-${JSON.stringify(f)}-${metric}`)
 
   useEffect(() => {
     let active = true
@@ -152,13 +157,22 @@ export default function Explore() {
   const toggleBand = (m: Metric, id: string) => set({ bands: { ...f.bands, [m]: f.bands[m] === id ? null : id } })
 
   return (
-    <div className="min-h-svh bg-paper text-ink">
-      <SiteHeader />
-      <main id="main" className="mx-auto max-w-[76rem] px-4 pt-10 pb-24 sm:px-6 lg:px-10">
-        <h1 className="border-t-2 border-forest pt-5 text-3xl leading-tight font-bold tracking-tight sm:text-4xl">Explore charities</h1>
-        <p className="mt-3 max-w-[62ch] font-serif text-lg text-ink-2">
-          Every vetted charity on Clear Cause. Filter by what matters to you, or click a slice of the chart.
-        </p>
+    <PageFrame
+      title="Explore charities"
+      intro="Every vetted charity on Clear Cause. Filter by what matters to you, or click a slice of the chart."
+      below={
+        <nav aria-label="Ways to browse" className="flex flex-wrap gap-2">
+          <span className={`${glassChip} lg-selected`} aria-current="page">
+            <Check className="size-4" strokeWidth={2.5} aria-hidden />
+            Explore all{list ? ` · ${all.length}` : ""}
+          </span>
+          <a href={quizDone ? "/for-you" : "/quiz"} className={glassChip} {...refract}>
+            <Sparkles className="size-4" aria-hidden />
+            {quizDone ? "See your For You picks" : "Take the quiz for picks"}
+          </a>
+        </nav>
+      }
+    >
 
         {error ? (
           <p className="mt-8 border-t border-rule pt-5 text-ink-2">The charity list didn't load ({error}). Refresh to try again.</p>
@@ -193,7 +207,8 @@ export default function Explore() {
                   <select
                     value={f.sort}
                     onChange={(e) => set({ sort: e.target.value as Filters["sort"] })}
-                    className="min-h-10 rounded-[2px] border border-input bg-paper px-2 text-sm text-ink"
+                    className={cn(glassChip, "cursor-pointer appearance-auto pr-2")}
+                    {...refract}
                   >
                     <option value="transparency">Most transparent</option>
                     <option value="programs">Most to programs</option>
@@ -202,6 +217,8 @@ export default function Explore() {
                   </select>
                 </label>
               </div>
+
+              <ActiveFilters f={f} set={set} toggleBand={toggleBand} />
 
               {list && results.length === 0 ? (
                 <div className="border-b border-rule py-8">
@@ -224,8 +241,7 @@ export default function Explore() {
             </section>
           </div>
         )}
-      </main>
-    </div>
+    </PageFrame>
   )
 }
 
@@ -332,8 +348,8 @@ function FiltersPanel({
   )
 
   return (
-    <aside aria-label="Filters" className="lg:sticky lg:top-24 lg:max-h-[calc(100svh-7rem)] lg:self-start lg:overflow-y-auto lg:pr-2">
-      <details className="group border-y border-rule lg:hidden">
+    <aside aria-label="Filters" className="lg:sticky lg:top-24 lg:max-h-[calc(100svh-7rem)] lg:self-start lg:overflow-y-auto">
+      <details className={cn(glassPanel, "group px-4 lg:hidden")}>
         <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 text-sm font-semibold">
           <SlidersHorizontal className="size-4" aria-hidden />
           Filters{activeCount ? ` (${activeCount})` : ""}
@@ -342,7 +358,7 @@ function FiltersPanel({
         </summary>
         <div className="pt-2 pb-6">{body}</div>
       </details>
-      <div className="hidden lg:block">{body}</div>
+      <div className={cn(glassPanel, "hidden p-5 lg:block")} data-refract="0.5">{body}</div>
     </aside>
   )
 }
@@ -401,10 +417,8 @@ function Donut({
               role="tab"
               aria-selected={m === metric}
               onClick={() => setMetric(m)}
-              className={cn(
-                "min-h-9 rounded-[2px] border px-3 text-sm font-medium",
-                m === metric ? "border-forest bg-forest text-paper" : "border-input bg-paper text-ink hover:border-forest",
-              )}
+              className={cn(glassChip, "min-h-9 px-3", m === metric && "lg-selected")}
+              {...(m === metric ? {} : refract)}
             >
               {m === "transparency" ? "Transparency" : m === "size" ? "Size" : "To programs"}
             </button>
@@ -486,4 +500,43 @@ function arcPath(cx: number, cy: number, R: number, r: number, a0: number, a1: n
   const large = a1 - a0 > Math.PI ? 1 : 0
   const p = (rad: number, a: number) => `${(cx + rad * Math.cos(a)).toFixed(2)} ${(cy + rad * Math.sin(a)).toFixed(2)}`
   return `M ${p(R, a0)} A ${R} ${R} 0 ${large} 1 ${p(R, a1)} L ${p(r, a1)} A ${r} ${r} 0 ${large} 0 ${p(r, a0)} Z`
+}
+
+/** The filters in force, as glass chips you can tap to remove. */
+function ActiveFilters({
+  f,
+  set,
+  toggleBand,
+}: {
+  f: Filters
+  set: (p: Partial<Filters>) => void
+  toggleBand: (m: Metric, id: string) => void
+}) {
+  const chips: { key: string; label: string; remove: () => void }[] = [
+    ...(f.q ? [{ key: "q", label: `"${f.q}"`, remove: () => set({ q: "" }) }] : []),
+    ...f.causes.map((c) => ({
+      key: `c-${c}`,
+      label: causes.find((x) => x.id === c)?.label ?? c,
+      remove: () => set({ causes: f.causes.filter((x) => x !== c) }),
+    })),
+    ...(f.state ? [{ key: "state", label: f.state, remove: () => set({ state: "" }) }] : []),
+    ...METRICS.flatMap((m) => {
+      const band = BANDS[m].bands.find((b) => b.id === f.bands[m])
+      return band ? [{ key: m, label: `${BANDS[m].title}: ${band.label}`, remove: () => toggleBand(m, band.id) }] : []
+    }),
+    ...(f.partner ? [{ key: "partner", label: "Vetted partners", remove: () => set({ partner: false }) }] : []),
+  ]
+  if (!chips.length) return null
+  return (
+    <ul aria-label="Active filters" className="flex flex-wrap gap-2 py-3">
+      {chips.map((c) => (
+        <li key={c.key}>
+          <button type="button" onClick={c.remove} className={cn(glassChip, "min-h-9 px-3")} {...refract} aria-label={`Remove filter ${c.label}`}>
+            {c.label}
+            <X className="size-3.5" aria-hidden />
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
 }
