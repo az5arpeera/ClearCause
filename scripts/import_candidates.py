@@ -160,7 +160,7 @@ def build_sql(records, today=None):
             f"   {sql_text(record.get('city'))}, {sql_text(record.get('region'))}, {sql_text(record.get('country'))}, 'pending')",
             "on conflict (id) do update set",
             "  name = excluded.name,",
-            "  ein = coalesce(excluded.ein, public.charities.ein),"
+            "  ein = coalesce(excluded.ein, public.charities.ein),",
             "  description = coalesce(excluded.description, public.charities.description),",
             "  website_url = coalesce(excluded.website_url, public.charities.website_url),",
             "  location_city = coalesce(excluded.location_city, public.charities.location_city),",
