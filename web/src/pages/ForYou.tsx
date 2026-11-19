@@ -3,18 +3,16 @@ import { ArrowRight, Compass, PencilLine, SlidersHorizontal } from "lucide-react
 
 import { CharityRow } from "@/components/CharityRow"
 import { PageFrame } from "@/components/Glass"
-import { glassChip, glassPanel, refract } from "@/lib/glass"
+import { glassChip, glassPanel, refract, solidButton } from "@/lib/glass"
 import { causes } from "@/data/causes"
 import { stateName } from "@/data/us-states"
 import { useAuth } from "@/lib/auth"
 import { fetchVettedCharityDetails, type CharityDetail } from "@/lib/db"
 import { useLiquidGlass } from "@/lib/liquid-glass"
 import { suggestCharities } from "@/lib/matching"
-import { whole } from "@/lib/money"
-import { preferencesQuery, useSavedPreferences, type SavedPreferences } from "@/lib/preferences"
+import { answerRows, preferencesQuery, useSavedPreferences, type SavedPreferences } from "@/lib/preferences"
 
 const causeLabel = Object.fromEntries(causes.map((c) => [c.id, c.label])) as Record<string, string>
-const frequencyLabel: Record<string, string> = { one_time: "one time", monthly: "monthly", quarterly: "quarterly" }
 
 /** Explore, pre-filtered to the donor's causes and state. */
 function exploreLink(prefs: SavedPreferences) {
@@ -107,7 +105,7 @@ export default function ForYou() {
                 </p>
                 <a
                   href="/explore"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-sm bg-forest px-5 text-sm font-semibold text-paper no-underline hover:bg-forest-deep"
+                  className={solidButton}
                 >
                   Go to Explore
                   <ArrowRight className="size-4" aria-hidden />
@@ -122,13 +120,7 @@ export default function ForYou() {
 }
 
 function Answers({ prefs }: { prefs: SavedPreferences }) {
-  const rows: [string, string][] = [
-    ["Causes", prefs.causes.length ? prefs.causes.map((c) => causeLabel[c]).join(", ") : "Any"],
-    ["Where", prefs.region ? (stateName[prefs.region] ?? prefs.region) + " first" : "Anywhere"],
-    ["Size", prefs.preferSmall ? "Under $1M preferred" : "Any size"],
-    ["To programs", prefs.directPctMin > 0 ? `At least ${prefs.directPctMin}%` : "No minimum"],
-    ["Typical gift", prefs.givingBudget != null ? `$${whole.format(prefs.givingBudget)}${prefs.frequency ? `, ${frequencyLabel[prefs.frequency] ?? prefs.frequency}` : ""}` : "Not set"],
-  ]
+  const rows = answerRows(prefs, { cause: causeLabel, state: stateName })
   return (
     <div className={`${glassPanel} px-5 pt-4 pb-5`} data-refract="0.6">
       <h2 className="text-lg font-bold tracking-tight">Your answers</h2>

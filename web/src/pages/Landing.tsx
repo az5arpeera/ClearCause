@@ -2,7 +2,6 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties
 import { ArrowRight, BadgeCheck, Check, CircleDashed, MapPin, ShieldCheck, Sprout } from "lucide-react"
 
 import { FloatingDonate } from "@/components/FloatingDonate"
-import { Logo } from "@/components/Logo"
 import { useLiquidGlass } from "@/lib/liquid-glass"
 import { cn } from "@/lib/utils"
 import { causes as causeList } from "@/data/causes"
@@ -21,6 +20,8 @@ import {
   type PhotoKey,
 } from "@/data/sample-landing"
 import { causes } from "@/data/causes"
+import { SiteFooter } from "@/components/SiteFooter"
+import { solidButton } from "@/lib/glass"
 
 const whole = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
 const exact = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 })
@@ -202,7 +203,7 @@ export default function Landing() {
         <StreakStrip />
         <FinalCall />
       </main>
-      <Footer />
+      <SiteFooter note="The organizations, donor and figures on this page are illustrative, not real." />
       <FloatingDonate href="#start" label="Find my matches" hideWhile={HIDE_DONATE_WHILE} />
     </div>
   )
@@ -379,7 +380,7 @@ function CausePicker({ className }: { className?: string }) {
       {picked.length > 0 ? <input type="hidden" name="causes" value={picked.join(",")} /> : null}
       <button
         type="submit"
-        className="mt-5 inline-flex h-12 items-center gap-2 rounded-[2px] bg-forest px-6 text-base font-semibold text-paper transition-colors hover:bg-forest-deep"
+        className={cn(solidButton, "mt-5 h-12 px-6 text-base")}
       >
         Continue to the quiz
         <ArrowRight className="size-4" aria-hidden />
@@ -1038,46 +1039,5 @@ function FinalCall() {
   )
 }
 
-function Footer() {
-  const cols: [string, [string, string][]][] = [
-    ["Donors", [["How matching works", "#matching"], ["Where money goes", "#money"], ["Find my matches", "#start"]]],
-    ["Nonprofits", [["Become a partner", "/partners"], ["What the audit checks", "#partners"]]],
-    ["Samples", [["Northside's charity profile", "/charity/northside"]]],
-  ]
-  return (
-    <footer className="bg-forest-deep text-paper">
-      <div className="mx-auto grid max-w-[76rem] gap-10 px-4 py-12 sm:px-6 md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))] lg:px-10">
-        <div>
-          <Logo />
-          <p className="mt-4 max-w-[40ch] text-sm leading-relaxed text-paper/80">
-            Matching donors with vetted charities, and showing where every dollar goes.
-          </p>
-        </div>
-        {cols.map(([title, links]) => (
-          <nav key={title} aria-label={title}>
-            <p className="text-sm font-semibold">{title}</p>
-            <ul className="mt-3 space-y-2 text-sm">
-              {links.map(([label, href]) => (
-                <li key={label}>
-                  <a href={href} className="text-paper/80 no-underline hover:text-paper hover:underline">
-                    {label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        ))}
-      </div>
-      <div className="border-t border-paper/15">
-        <p className="mx-auto max-w-[76rem] px-4 py-5 text-[0.8125rem] leading-relaxed text-pretty text-paper/70 sm:px-6 lg:px-10 [&>span]:block [&>span]:max-w-[78ch]">
-          <span>
-          Prototype. The organizations, donor and figures on this page are illustrative, not real. Photos are stock images
-          from Unsplash by {Array.from(new Set(Object.values(photos).map((p) => p.credit))).join(", ")}.
-          </span>
-        </p>
-      </div>
-    </footer>
-  )
-}
 
 

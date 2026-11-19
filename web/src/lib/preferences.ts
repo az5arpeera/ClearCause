@@ -93,6 +93,27 @@ export function preferencesQuery(p: Preferences) {
   return q
 }
 
+const frequencyLabel: Record<string, string> = { one_time: "one time", monthly: "monthly", quarterly: "quarterly" }
+
+/** Saved answers as label/value rows, for For You and the profile page. */
+export function answerRows(
+  p: SavedPreferences,
+  labels: { cause: Record<string, string>; state: Record<string, string> },
+): [string, string][] {
+  return [
+    ["Causes", p.causes.length ? p.causes.map((c) => labels.cause[c] ?? c).join(", ") : "Any"],
+    ["Where", p.region ? `${labels.state[p.region] ?? p.region} first` : "Anywhere"],
+    ["Size", p.preferSmall ? "Under $1M preferred" : "Any size"],
+    ["To programs", p.directPctMin > 0 ? `At least ${p.directPctMin}%` : "No minimum"],
+    [
+      "Typical gift",
+      p.givingBudget != null
+        ? `$${Math.round(p.givingBudget).toLocaleString("en-US")}${p.frequency ? `, ${frequencyLabel[p.frequency] ?? p.frequency}` : ""}`
+        : "Not set",
+    ],
+  ]
+}
+
 /**
  * The current donor's preferences: this browser's copy first; for a signed-in
  * donor on a new device, what their account has. A guest's answers are copied

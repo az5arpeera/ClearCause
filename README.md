@@ -148,4 +148,9 @@ These filings give revenue and total expenses only, not the program/admin/fundra
 - `/explore`: every vetted charity, with a filter sidebar (search, causes, state, budget, share to programs, transparency, partners) and a donut chart; click a slice to filter. Filters live in the URL.
 - `/quiz`: one-time onboarding. Answers are saved in the browser (and to the account when signed in; a guest's answers move to their account on sign-up), then it goes to For You. Visiting again edits them.
 - `/for-you`: every charity ranked by `suggestCharities` in `web/src/lib/matching.ts`. Nothing is filtered out: charities sharing a chosen cause come first, the rest under "More to explore".
-- `/charity/<id>`: the profile. `/about` and `/contact` are placeholders for now.
+- `/charity/<id>`: a charity's page: where the money went, a gift form, why it matched you, and a source for every figure.
+- `/profile`: the donor's photo and name (saved to `profiles`; photos go to the `avatars` storage bucket), their quiz answers, and a payment-method placeholder. Cards will be stored by Stripe, never in our database.
+- `/about`: what Clear Cause is, where charities and figures come from, and how matching is weighted.
+- `/contact`: a form that saves to `contact_messages` (anyone can send; only admins can read).
+
+Photo uploads and the contact form need `supabase/migrations/0005_profile_avatars_contact.sql` applied (paste it into Supabase's SQL Editor, or `supabase db push`).

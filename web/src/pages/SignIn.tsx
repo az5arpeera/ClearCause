@@ -4,6 +4,9 @@ import { ArrowLeft } from "lucide-react"
 import { PageBackdrop } from "@/components/Glass"
 import { SiteHeader } from "@/components/SiteHeader"
 import { useAuth } from "@/lib/auth"
+import { SiteFooter } from "@/components/SiteFooter"
+import { cn } from "@/lib/utils"
+import { solidButton } from "@/lib/glass"
 
 type Mode = "signin" | "signup"
 
@@ -148,7 +151,7 @@ export default function SignIn() {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="mt-1 inline-flex h-11 items-center justify-center rounded-[2px] bg-forest px-5 text-[0.9375rem] font-semibold text-paper hover:bg-forest-deep disabled:opacity-50"
+                  className={cn(solidButton, "mt-1")}
                 >
                   {busy ? "…" : mode === "signin" ? "Sign in" : "Create account"}
                 </button>
@@ -180,6 +183,7 @@ export default function SignIn() {
           </a>
         </div>
       </main>
+      <SiteFooter />
     </div>
   )
 }

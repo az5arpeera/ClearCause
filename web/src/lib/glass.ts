@@ -8,3 +8,10 @@ export const glassChip =
 export const glassPanel = "lg lg-paper rounded-[12px]"
 /** Data attributes that let refraction.js bend the page backdrop at the rim. */
 export const refract = { "data-refract": "0.9", "data-refract-source": "#page-backdrop" } as const
+
+/**
+ * The one solid action per view (submit, give, go): forest, 12px like the
+ * glass so the two layers read as one family.
+ */
+export const solidButton =
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-[12px] bg-forest px-5 text-sm font-semibold text-paper no-underline transition-[background-color,scale] hover:bg-forest-deep active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"

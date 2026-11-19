@@ -3,6 +3,7 @@ import type { ReactNode } from "react"
 import { SiteHeader } from "@/components/SiteHeader"
 import { photos, photoUrl } from "@/data/sample-landing"
 import { cn } from "@/lib/utils"
+import { SiteFooter } from "@/components/SiteFooter"
 
 /**
  * The soft green-and-blue photo the glass refracts, the same one as the
@@ -64,6 +65,7 @@ export function PageFrame({
         {below ? <div className="mt-6">{below}</div> : null}
         {children}
       </main>
+      <SiteFooter />
     </div>
   )
 }

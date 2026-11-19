@@ -4,7 +4,7 @@ import { ArrowRight, BadgeCheck, Check, CircleDashed, ExternalLink, Minus } from
 import { Button } from "@/components/ui/button"
 import { FloatingDonate } from "@/components/FloatingDonate"
 import { PageBackdrop } from "@/components/Glass"
-import { glassChip, refract } from "@/lib/glass"
+import { glassChip, refract, solidButton } from "@/lib/glass"
 import { SiteHeader } from "@/components/SiteHeader"
 import { stateName } from "@/data/us-states"
 import { causes } from "@/data/causes"
@@ -15,6 +15,7 @@ import { rankCharities, readPreferences, smallBudgetUsd } from "@/lib/matching"
 import { preferencesQuery, readLocalPreferences } from "@/lib/preferences"
 import { compactUsd, count, exact, spendingParts, splitAmount, whole, type SpendPart } from "@/lib/money"
 import { cn } from "@/lib/utils"
+import { SiteFooter } from "@/components/SiteFooter"
 
 const causeLabel = Object.fromEntries(causes.map((c) => [c.id, c.label])) as Record<string, string>
 const HIDE_DONATE_WHILE = ["#give"]
@@ -69,6 +70,7 @@ export default function CharityProfile({ id }: { id: string }) {
       ) : (
         <Profile charity={charity} />
       )}
+      {charity ? null : <SiteFooter />}
     </div>
   )
 }
@@ -80,7 +82,7 @@ function StatePage({ title, children, busy }: { title: string; children: ReactNo
         <h1 className="text-[2rem] leading-tight font-bold tracking-[-0.02em]">{title}</h1>
         <p className="mt-3 font-serif text-[1.0625rem] leading-[1.6] text-ink-2">{children}</p>
         {!busy ? (
-          <a href="/explore" className="mt-8 inline-flex h-11 items-center gap-2 rounded-[2px] bg-forest px-5 text-[0.9375rem] font-semibold text-paper no-underline hover:bg-forest-deep">
+          <a href="/explore" className={cn(solidButton, "mt-8")}>
             Browse charities
             <ArrowRight className="size-4" aria-hidden />
           </a>
@@ -123,7 +125,15 @@ function Profile({ charity }: { charity: CharityDetail }) {
           {extras ? <Programs /> : null}
         </div>
       </main>
-      <Colophon charity={charity} sample={sample} />
+      <div className="mt-24">
+        <SiteFooter
+          note={
+            sample
+              ? `${charity.name} is seeded sample data. Its figures are illustrative and describe no real organization.`
+              : undefined
+          }
+        />
+      </div>
       <FloatingDonate href="#give" ariaLabel={`Give to ${charity.name}: jump to the gift form`} hideWhile={HIDE_DONATE_WHILE} className="lg:hidden" />
     </>
   )
@@ -720,7 +730,7 @@ function WhyMatched({ charity, params, hasPrefs }: { charity: CharityDetail; par
         </SectionOpener>
         <a
           href="/quiz"
-          className="mt-6 inline-flex h-11 items-center gap-2 rounded-[2px] bg-forest px-5 text-[0.9375rem] font-semibold text-paper no-underline hover:bg-forest-deep"
+          className={cn(solidButton, "mt-6")}
         >
           Take the quiz
           <ArrowRight className="size-4" aria-hidden />
@@ -971,25 +981,3 @@ function ProgramFigure({ label, reported, children }: { label: string; reported?
 
 /* --------------------------------------------------------------- colophon */
 
-function Colophon({ charity, sample }: { charity: CharityDetail; sample: boolean }) {
-  return (
-    <footer className="mt-24 bg-forest-deep text-paper">
-      <div className="mx-auto flex max-w-[76rem] flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-end md:justify-between lg:px-10">
-        <div className="max-w-[56ch]">
-          <p className="font-bold">Clear Cause</p>
-          <p className="mt-2 text-sm leading-relaxed text-paper/80">
-            {sample
-              ? `${charity.name} is seeded sample data. Its figures are illustrative and describe no real organization.`
-              : "Figures come from the charity's published financial statements, linked above."}
-          </p>
-        </div>
-        <a
-          href="#give"
-          className="inline-flex h-11 items-center self-start rounded-[2px] border border-paper/50 px-5 text-[0.9375rem] font-semibold text-paper no-underline hover:border-paper hover:bg-paper hover:text-forest-deep md:self-auto"
-        >
-          Give to {shortName(charity.name)}
-        </a>
-      </div>
-    </footer>
-  )
-}
