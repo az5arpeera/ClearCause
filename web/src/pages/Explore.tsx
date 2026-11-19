@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react"
-import { Check, Sparkles, SlidersHorizontal, X } from "lucide-react"
+import { Sparkles, SlidersHorizontal, X } from "lucide-react"
 
 import { CharityRow } from "@/components/CharityRow"
 import { PageFrame } from "@/components/Glass"
@@ -159,13 +159,9 @@ export default function Explore() {
   return (
     <PageFrame
       title="Explore charities"
-      intro="Every vetted charity on Clear Cause. Filter by what matters to you, or click a slice of the chart."
+      intro="Every vetted charity. Filter on the left, or click a slice of the chart."
       below={
         <nav aria-label="Ways to browse" className="flex flex-wrap gap-2">
-          <span className={`${glassChip} lg-selected`} aria-current="page">
-            <Check className="size-4" strokeWidth={2.5} aria-hidden />
-            Explore all{list ? ` · ${all.length}` : ""}
-          </span>
           <a href={quizDone ? "/for-you" : "/quiz"} className={glassChip} {...refract}>
             <Sparkles className="size-4" aria-hidden />
             {quizDone ? "See your For You picks" : "Take the quiz for picks"}

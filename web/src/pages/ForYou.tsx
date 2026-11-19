@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { ArrowRight, Check, Compass, PencilLine, SlidersHorizontal } from "lucide-react"
+import { ArrowRight, Compass, PencilLine, SlidersHorizontal } from "lucide-react"
 
 import { CharityRow } from "@/components/CharityRow"
 import { PageFrame } from "@/components/Glass"
@@ -58,22 +58,14 @@ export default function ForYou() {
   return (
     <PageFrame
       title={justFinished ? "Your suggestions are ready" : "For you"}
-      intro={
-        justFinished
-          ? "Every charity on Clear Cause, ranked against your answers. They change the order, never who you can see. Start here, or browse everything yourself."
-          : "Every charity on Clear Cause, in the order that best fits your answers. Your answers change the order; they never hide anyone."
-      }
+      intro="Every charity, ranked by how well it fits your answers. Nothing is hidden."
       below={
         prefs ? (
           <nav aria-label="Where to next" className="flex flex-wrap gap-2">
-            <span className={`${glassChip} lg-selected`} aria-current="page">
-              <Check className="size-4" strokeWidth={2.5} aria-hidden />
-              For you{suggestions ? ` · ${suggestions.fits.length + suggestions.more.length}` : ""}
-            </span>
             {yourCauses ? (
               <a href={exploreLink(prefs)} className={glassChip} {...refract}>
                 <SlidersHorizontal className="size-4" aria-hidden />
-                Filter your causes in Explore
+                Your causes in Explore
               </a>
             ) : null}
             <a href="/explore" className={glassChip} {...refract}>
